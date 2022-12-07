@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <SDL2/SDL.h>
 
+extern const int FPS;
+extern const uint32_t FRAME_TARGET_TIME;
 extern const int GRID_SPACING_PX;
 extern const uint32_t GRID_COLOR;
 

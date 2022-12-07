@@ -1,5 +1,7 @@
 #include "display.h"
 
+const int FPS = 30;
+const uint32_t FRAME_TARGET_TIME = 1000 / FPS;
 const int GRID_SPACING_PX = 10;
 const uint32_t GRID_COLOR = 0xFF000000;
 

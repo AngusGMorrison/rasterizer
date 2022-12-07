@@ -8,13 +8,11 @@
 #include "safe_malloc.h"
 #include "vector.h"
 
-const int N_POINTS = 9 * 9 * 9;
-const float fov_factor = 120;
-
-vec3_t cube_points[N_POINTS];
-vec2_t projected_points[N_POINTS];
+vec3_t camera_position = { 0, 0, -5 };
+vec3_t cube_rotation = { 0, 0, 0 };
 
 bool is_running = false;
+Uint64 prev_frame_time = 0;
 
 void setup(void) {
 	color_buffer = safe_malloc(sizeof(uint32_t) * window_width * window_height);
@@ -25,16 +23,6 @@ void setup(void) {
 		window_width,
 		window_height
 	);
-
-	int point_count = 0;
-	for (float x = -1; x <= 1; x += 0.25) {
-		for (float y = -1; y <= 1; y += 0.25) {
-			for (float z = -1; z <= 1; z += 0.25) {
-				vec3_t point = { x, y, z };
-				cube_points[point_count++] = point;
-			}
-		}
-	}
 }
 
 void process_input(void) {
@@ -52,35 +40,44 @@ void process_input(void) {
 	}
 }
 
-// project receives a 3D vector and returns projected 2D point.
-vec2_t project(vec3_t point) {
-	vec2_t projected_point = {
-		.x = fov_factor * point.x,
-		.y = fov_factor * point.y
-	};
-	return projected_point;
+void wait_for_next_frame(void) {
+	uint32_t elapsed = SDL_GetTicks64() - prev_frame_time;
+	if (elapsed < FRAME_TARGET_TIME) {
+		SDL_Delay(FRAME_TARGET_TIME - elapsed);
+	}
+	prev_frame_time = SDL_GetTicks64();
 }
 
 void update(void) {
-	for (int i = 0; i < N_POINTS; i++) {
-		projected_points[i] = project(cube_points[i]);
-	}
+	wait_for_next_frame();
+
+	cube_rotation.x += 0.05;
+	cube_rotation.y += 0.05;
+	cube_rotation.z += 0.05;
+
+	// for (int i = 0; i < N_POINTS; i++) {
+	// 	vec3_t transformed = vec3_rotate_x(cube_points[i], cube_rotation.x);
+	// 	transformed = vec3_rotate_y(transformed, cube_rotation.y);
+	// 	transformed = vec3_rotate_z(transformed, cube_rotation.z);
+	// 	transformed.z -= camera_position.z;
+	// 	projected_points[i] = project(transformed);
+	// }
 }
 
 void render(void) {
 	draw_grid();
-	for (int i = 0; i < N_POINTS; i++) {
-		vec2_t projected_point = projected_points[i];
-		draw_rectangle(
-			projected_point.x + window_width / 2,
-			projected_point.y + window_height / 2,
-			4,
-			4,
-			0xFFFFFF00
-		);
-	}
-	render_color_buffer();
-	clear_color_buffer(0xFF000000);
+	// for (int i = 0; i < N_POINTS; i++) {
+	// 	vec2_t projected_point = projected_points[i];
+	// 	draw_rectangle(
+	// 		projected_point.x + window_width / 2,
+	// 		projected_point.y + window_height / 2,
+	// 		4,
+	// 		4,
+	// 		0xFFFFFF00
+	// 	);
+	// }
+	// render_color_buffer();
+	// clear_color_buffer(0xFF000000);
 
 	SDL_RenderPresent(renderer);
 }
