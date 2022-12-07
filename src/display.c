@@ -1,9 +1,13 @@
 #include "display.h"
 
-const int FPS = 30;
+const int FPS = 60;
 const uint32_t FRAME_TARGET_TIME = 1000 / FPS;
 const int GRID_SPACING_PX = 10;
-const uint32_t GRID_COLOR = 0xFF000000;
+
+const uint32_t BLACK = 0xFF000000;
+const uint32_t YELLOW = 0xFFFFFF00;
+const uint32_t GREEN = 0xFF00FF00;
+
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
@@ -45,22 +49,50 @@ bool initialize_window(void) {
 	return true;
 }
 
-void draw_grid(void) {
-	for (int y = 0; y < window_height; y++) {
-		for (int x = 0; x < window_width; x++) {
-			if (y % GRID_SPACING_PX == 0 || x % GRID_SPACING_PX == 0) {
-				draw_pixel(x, y, GRID_COLOR);
-			}
-		}
-	}
-}
-
 void draw_pixel(int x, int y, uint32_t color) {
 	if (x < 0 || x >= window_width || y < 0 || y >= window_height) {
 		return;
 	}
 
 	color_buffer[window_width * y + x] = color;
+}
+
+void draw_grid(void) {
+	for (int y = 0; y < window_height; y++) {
+		for (int x = 0; x < window_width; x++) {
+			if (y % GRID_SPACING_PX == 0 || x % GRID_SPACING_PX == 0) {
+				draw_pixel(x, y, BLACK);
+			}
+		}
+	}
+}
+
+void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
+	int dx = x1 - x0;
+	int dy = y1 - y0;
+	int abs_dx = abs(dx);
+	int abs_dy = abs(dy);
+
+	// Select the greater side length, since in order to draw only one pixel per loop iteration, we
+	// must treat our line from the perspective of it being <= 45 degrees. Otherwise, y increments >
+	// 1 will cause holes in the line.
+	int max_side_length = abs_dx >= abs_dy ? abs_dx : abs_dy;
+	float x_inc = dx / (float)max_side_length;
+	float y_inc = dy / (float)max_side_length;
+
+	float cur_x = x0;
+	float cur_y = y0;
+	for (int i = 0; i <= max_side_length; i++) {
+		draw_pixel(round(cur_x), round(cur_y), color);
+		cur_x += x_inc;
+		cur_y += y_inc;
+	}
+}
+
+void draw_triangle(triangle_t t, uint32_t color) {
+	draw_line(t.points[0].x, t.points[0].y, t.points[1].x, t.points[1].y, color);
+	draw_line(t.points[1].x, t.points[1].y, t.points[2].x, t.points[2].y, color);
+	draw_line(t.points[2].x, t.points[2].y, t.points[0].x, t.points[0].y, color);
 }
 
 void draw_rectangle(int x, int y, int w, int h, uint32_t color) {

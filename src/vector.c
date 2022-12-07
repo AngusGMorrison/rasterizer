@@ -4,13 +4,26 @@
 
 const float fov_factor = 640;
 
-// project receives a 3D vector and returns projected 2D point.
-vec2_t project(vec3_t point) {
+vec2_t vec2_translate_by(vec2_t point, int dx, int dy) {
+	point.x += dx;
+	point.y += dy;
+	return point;
+}
+
+// vec3_project receives a 3D vector and returns projected 2D point.
+vec2_t vec3_project(vec3_t point) {
 	vec2_t projected_point = {
 		.x = (fov_factor * point.x) / point.z,
 		.y = (fov_factor * point.y) / point.z
 	};
 	return projected_point;
+}
+
+vec3_t vec3_translate_by(vec3_t point, int dx, int dy, int dz) {
+	point.x += dx;
+	point.y += dy;
+	point.z += dz;
+	return point;
 }
 
 vec3_t vec3_rotate_x(vec3_t v, float angle) {
