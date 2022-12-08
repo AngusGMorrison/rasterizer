@@ -90,6 +90,7 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
 }
 
 void draw_triangle(triangle_t t, uint32_t color) {
+	fprintf(stdout, "drawing triangle (%.6f,%.6f), (%.6f,%.6f), (%.6f,%.6f)\n", t.points[0].x, t.points[0].y, t.points[1].x, t.points[1].y, t.points[2].x, t.points[2].y);
 	draw_line(t.points[0].x, t.points[0].y, t.points[1].x, t.points[1].y, color);
 	draw_line(t.points[1].x, t.points[1].y, t.points[2].x, t.points[2].y, color);
 	draw_line(t.points[2].x, t.points[2].y, t.points[0].x, t.points[0].y, color);
@@ -128,7 +129,6 @@ void clear_color_buffer(uint32_t color) {
 }
 
 void destroy_window(void) {
-	free(color_buffer);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();

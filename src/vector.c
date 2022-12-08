@@ -1,10 +1,8 @@
-#include <math.h>
-
 #include "vector.h"
 
 const float fov_factor = 640;
 
-vec2_t vec2_translate_by(vec2_t point, int dx, int dy) {
+vec2_t vec2_translate(vec2_t point, int dx, int dy) {
 	point.x += dx;
 	point.y += dy;
 	return point;
@@ -19,7 +17,7 @@ vec2_t vec3_project(vec3_t point) {
 	return projected_point;
 }
 
-vec3_t vec3_translate_by(vec3_t point, int dx, int dy, int dz) {
+vec3_t vec3_translate(vec3_t point, int dx, int dy, int dz) {
 	point.x += dx;
 	point.y += dy;
 	point.z += dz;
@@ -57,4 +55,8 @@ vec3_t vec3_rotate_z(vec3_t v, float angle) {
 		.z = v.z
 	};
 	return rotated;
+}
+
+bool vec3_is_origin(vec3_t v) {
+	return v.x == 0.0 && v.y == 0.0 && v.z == 0.0;
 }
