@@ -6,6 +6,7 @@
 #include <math.h>
 #include <SDL2/SDL.h>
 
+#include "float.h"
 #include "triangle.h"
 
 extern const int FPS;
@@ -15,6 +16,7 @@ extern const int GRID_SPACING_PX;
 extern const uint32_t BLACK;
 extern const uint32_t GREEN;
 extern const uint32_t YELLOW;
+extern const uint32_t WHITE;
 
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
@@ -28,6 +30,7 @@ void draw_pixel(int x, int y, uint32_t color);
 void draw_grid(void);
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
 void draw_triangle(triangle_t t, uint32_t color);
+void fill_triangle(triangle_t t, uint32_t color);
 void draw_rectangle(int x, int y, int w, int h, uint32_t color);
 void render_color_buffer(void);
 void clear_color_buffer(uint32_t color);

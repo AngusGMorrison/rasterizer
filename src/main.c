@@ -58,10 +58,9 @@ bool shouldCullFace(vec3_t* vertices) {
 	vec3_t a = vertices[0];
 	vec3_t b = vertices[1];
 	vec3_t c = vertices[2];
-	vec3_t ab = vec3_sub(b, a);
-	vec3_t ac = vec3_sub(c, a);
-	vec3_t n = vec3_cross(ab, ac);
-	n = vec3_normalize(n);
+	vec3_t ab = vec3_normalize(vec3_sub(b, a));
+	vec3_t ac = vec3_normalize(vec3_sub(c, a));
+	vec3_t n = vec3_normalize(vec3_cross(ab, ac));
 	vec3_t acam = vec3_sub(camera_position, a);
 
 	if (vec3_dot(n, acam) <= 0) {
@@ -112,8 +111,10 @@ void render(void) {
 
 	int len = array_len(triangles_to_render);
 	for (int i = 0; i < len; i++) {
-		draw_triangle(triangles_to_render[i], GREEN);
+		fill_triangle(triangles_to_render[i], WHITE);
+		draw_triangle(triangles_to_render[i], BLACK);
 	}
+
 	render_color_buffer();
 	clear_color_buffer(BLACK);
 

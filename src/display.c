@@ -7,6 +7,7 @@ const int GRID_SPACING_PX = 10;
 const uint32_t BLACK = 0xFF000000;
 const uint32_t YELLOW = 0xFFFFFF00;
 const uint32_t GREEN = 0xFF00FF00;
+const uint32_t WHITE = 0xFFFFFFFF;
 
 
 SDL_Window* window = NULL;
@@ -48,6 +49,8 @@ bool initialize_window(void) {
 
 	return true;
 }
+
+// TODO: Convert all draw methods to use vecs and triangles until the last possible moment.
 
 void draw_pixel(int x, int y, uint32_t color) {
 	if (x < 0 || x >= window_width || y < 0 || y >= window_height) {
@@ -93,6 +96,128 @@ void draw_triangle(triangle_t t, uint32_t color) {
 	draw_line(t.points[0].x, t.points[0].y, t.points[1].x, t.points[1].y, color);
 	draw_line(t.points[1].x, t.points[1].y, t.points[2].x, t.points[2].y, color);
 	draw_line(t.points[2].x, t.points[2].y, t.points[0].x, t.points[0].y, color);
+}
+
+// triangle_horizontal_b_hyp_intercept returns the vec2 at which a horizontal line projected from
+// the triangle's middle vertex (by y-value), b, will intercept the hypoteneuse ac, producing two
+// triangles with a flat bottom and flat top, respectively.
+//
+// t.points must be sorted by y-value.
+vec2_t triangle_horizontal_b_hyp_intercept(const triangle_t* t) {
+	vec2_t a = t->points[0];
+	vec2_t b = t->points[1];
+	vec2_t c = t->points[2];
+
+	vec2_t v = {
+		.x = ((c.x - a.x) * (b.y - a.y)) / (c.y - a.y) + a.x,
+		.y = b.y,
+	};
+
+	return v;
+}
+
+/*
+fill_flat_bottom_triangle renders a filled, flat-bottomed triangle by scanning from top to bottom
+and calculating the difference in the x positions of the opposing slopes.
+
+			 0
+			/ \
+		l  /   \  r
+		  /_____\
+		 1       2
+*/
+void fill_flat_bottom_triangle(const triangle_t* triangle, uint32_t color) {
+	// Calculate the change in x with respect to y (inverse gradient) for both sloped sides of the
+	// flat-bottomed triangle. We know that y (representing the current scan line) will increase
+	// monotonically – the change in x is our unknown.
+	float inv_m_left = vec2_inv_gradient(triangle->points[0], triangle->points[1]);
+	float inv_m_right = vec2_inv_gradient(triangle->points[2], triangle->points[0]);
+	float x_start = triangle->points[0].x;
+	float x_end = x_start;
+
+
+	// Fill the triangle from top to bottom.
+	float max_width = fabsf(triangle->points[2].x - triangle->points[1].x);
+	for (int y = triangle->points[0].y; y <= (int)triangle->points[2].y; y++) {
+		draw_line(x_start, y, x_end, y, color);
+
+		x_start += inv_m_left;
+		x_end += inv_m_right;
+		// Prevent x_start from escaping the bounds of the triangle when inv_m is large.
+		if (fabsf(x_end - x_start) > max_width) {
+			x_start = triangle->points[1].x;
+			x_end = triangle->points[2].x;
+		}
+	}
+}
+
+/*
+fill_flat_top_triangle renders a filled, flat-topped triangle by scanning from bottom to top
+and calculating the difference in the x positions of the opposing slopes.
+
+		 0 _____ 1
+		  \     /
+		l  \   /  r
+			\ /
+			 2
+*/
+void fill_flat_top_triangle(const triangle_t* t, uint32_t color) {
+	// Calculate the change in x with respect to y (inverse gradient) for both sloped sides of the
+	// flat-topped triangle. We know that y (representing the current scan line) will decrease
+	// monotonically – the change in x is our unknown.
+	float inv_m_left = vec2_inv_gradient(t->points[2], t->points[0]);
+	float inv_m_right = vec2_inv_gradient(t->points[1], t->points[2]);
+	float x_start = t->points[2].x;
+	float x_end = x_start;
+
+	// Fill the triangle from bottom to top. This loop draws one line fewer than
+	// fill_flat_bottom_triangle to avoid double-rendering the join between top and bottom.
+	float max_width = fabsf(t->points[1].x - t->points[0].x);
+	for (int y = t->points[2].y; y > (int)t->points[0].y; y--) {
+		draw_line(x_start, y, x_end, y, color);
+
+		// We're moving "against" the gradient, so subtract m on each iteration.
+		x_start -= inv_m_left;
+		x_end -= inv_m_right;
+		// Prevent x_start from escaping the bounds of the triangle when inv_m is large.
+		if (fabsf(x_end - x_start) > max_width) {
+			x_start = t->points[0].x;
+			x_end = t->points[1].x;
+		}
+	}
+}
+
+// TODO: Pass by pointer
+void fill_triangle(triangle_t t, uint32_t color) {
+	triangle_sort_vertices_y(&t);
+	vec2_t a = t.points[0];
+	vec2_t b = t.points[1];
+	vec2_t c = t.points[2];
+
+	// If the input triangle is already flat-topped or flat-bottomed, perform only the required
+	// operation. Otherwise, attempting to fill the zero-height opposite half will cause a zero
+	// division error.
+	if (float_approx_equal(a.y, b.y)) {
+		fill_flat_top_triangle(&t, color);
+		return;
+	}
+	if (float_approx_equal(b.y, c.y)) {
+		fill_flat_bottom_triangle(&t, color);
+		return;
+	}
+
+	// Calculate the point at the intercept of the horizontal line originating at b with ac, using
+	// triangle similarity.
+	vec2_t m = triangle_horizontal_b_hyp_intercept(&t);
+	triangle_t flat_bottom = {
+		.points = {a, b, m}
+	};
+	triangle_t flat_top = {
+		.points = {b, m, c}
+	};
+
+	fill_flat_bottom_triangle(&flat_bottom, color);
+	fill_flat_top_triangle(&flat_top, color);
 }
 
 void draw_rectangle(int x, int y, int w, int h, uint32_t color) {

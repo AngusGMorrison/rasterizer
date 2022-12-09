@@ -6,6 +6,14 @@ float vec2_magnitude(vec2_t v) {
 	return sqrt(v.x * v.x + v.y * v.y);
 }
 
+float vec2_gradient(vec2_t a, vec2_t b) {
+	return (b.y - a.y) / (b.x - a.x);
+}
+
+float vec2_inv_gradient(vec2_t a, vec2_t b) {
+	return (b.x - a.x) / (b.y - a.y);
+}
+
 vec2_t vec2_add(vec2_t a, vec2_t b) {
 	a.x += b.x;
 	a.y += b.y;
@@ -46,6 +54,15 @@ vec2_t vec2_translate(vec2_t point, int dx, int dy) {
 vec2_t vec2_normalize(vec2_t v) {
 	return vec2_sdiv(v, vec2_magnitude(v));
 }
+
+// vec2_less_y is a comparator returning true if the y-component of a is less than that of b.
+bool vec2_less_y(const void* a, const void* b) {
+	vec2_t* vec_a = (vec2_t*)a;
+	vec2_t* vec_b = (vec2_t*)b;
+
+	return vec_a->y < vec_b->y;
+}
+
 
 float vec3_magnitude(vec3_t v) {
 	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);

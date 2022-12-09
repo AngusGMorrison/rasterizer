@@ -6,7 +6,7 @@
 #include "triangle.h"
 
 // mesh_t represents a dynamically sized mesh.
-typedef struct {
+typedef struct mesh_t {
 	vec3_t* vertices; // dynamic array
 	face_t* faces; // dynamic array
 	vec3_t rotation;
