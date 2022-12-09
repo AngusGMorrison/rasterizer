@@ -15,7 +15,7 @@
 // Global variables for execution status and game loop.
 bool is_running = false;
 Uint64 prev_frame_time = 0;
-vec3_t camera_position = { 0, 0, -5 };
+vec3_t camera_position = { 0, 0, 0 };
 triangle_t* triangles_to_render = NULL; // dynamic array of triangles to render
 
 int setup(void) {
@@ -53,6 +53,23 @@ void wait_for_next_frame(void) {
 	prev_frame_time = SDL_GetTicks64();
 }
 
+
+bool shouldCullFace(vec3_t* vertices) {
+	vec3_t a = vertices[0];
+	vec3_t b = vertices[1];
+	vec3_t c = vertices[2];
+	vec3_t ab = vec3_sub(b, a);
+	vec3_t ac = vec3_sub(c, a);
+	vec3_t n = vec3_cross(ab, ac);
+	n = vec3_normalize(n);
+	vec3_t acam = vec3_sub(camera_position, a);
+
+	if (vec3_dot(n, acam) <= 0) {
+		return true;
+	}
+	return false;
+}
+
 void update(void) {
 	wait_for_next_frame();
 	array_clear(triangles_to_render, sizeof(triangle_t));
@@ -69,13 +86,20 @@ void update(void) {
 		vertices[1] = mesh.vertices[face.b - 1];
 		vertices[2] = mesh.vertices[face.c - 1];
 
-		triangle_t triangle;
 		for (int j = 0; j < 3; j++) {
 			vec3_t transformed = vec3_rotate_x(vertices[j], mesh.rotation.x);
 			transformed = vec3_rotate_y(transformed, mesh.rotation.y);
 			transformed = vec3_rotate_z(transformed, mesh.rotation.z);
-			transformed = vec3_translate(transformed, 0, 0, camera_position.z);
-			vec2_t projected = vec3_project(transformed);
+			vertices[j] = vec3_translate(transformed, 0, 0, -5);
+		}
+
+		if (shouldCullFace(vertices)) {
+			continue;
+		}
+
+		triangle_t triangle;
+		for (int j = 0; j < 3; j++) {
+			vec2_t projected = vec3_project(vertices[j]);
 			triangle.points[j] = vec2_translate(projected, window_width / 2, window_height / 2);
 		}
 

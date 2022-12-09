@@ -1,20 +1,11 @@
 #include "obj_parser.h"
 
-const int MAX_LINE = 500;
-const char* ORIGIN = "0.000000 0.000000 0.000000";
-
-bool obj_line_is_origin(char* line) {
-	return memcmp(line, ORIGIN, 26) == 0;
-}
+const int MAX_LINE = 512;
 
 int parse_vertex(char* line, mesh_t* dst) {
-	char* ptr;
-	vec3_t v = {
-		.x = strtof(line, &ptr),
-		.y = strtof(ptr, &ptr),
-		.z = strtof(ptr, &ptr),
-	};
-	if (vec3_is_origin(v) && !obj_line_is_origin(line)) {
+	vec3_t v;
+	int filled = sscanf(line, "v %f %f %f", &v.x, &v.y, &v.z);
+	if (filled < 3) {
 		fprintf(stderr, "failed to parse vertex for line \"%s\"\n", line);
 		return -1;
 	}
@@ -24,34 +15,32 @@ int parse_vertex(char* line, mesh_t* dst) {
 }
 
 int parse_face(char* line, mesh_t* dst) {
-	char* token = strtok(line, " ");
-	int vertexIDs[3];
-	int i;
-	for (i = 0; i < 3 && token != NULL; i++) {
-		vertexIDs[i] = atoi(token);
-		token = strtok(NULL, " ");
-	}
-	if (token == NULL && i < 3) {
+	face_t face;
+	face_t texture;
+	face_t normal;
+	int filled = sscanf(
+		line,
+		"f %d/%d/%d %d/%d/%d %d/%d/%d",
+		&face.a, &texture.a, &normal.a,
+		&face.b, &texture.b, &normal.b,
+		&face.c, &texture.c, &normal.c
+	);
+	if (filled < 9) {
 		fprintf(stderr, "failed to parse face for line \"%s\"\n", line);
 		return -1;
 	}
 
-	face_t f = {
-		.a = vertexIDs[0],
-		.b = vertexIDs[1],
-		.c = vertexIDs[2],
-	};
-	array_push(dst->faces, f);
+	array_push(dst->faces, face);
 	return 0;
 }
 
 int parse_line(char* line, mesh_t* dst) {
 	int err = 0;
-	if (memcmp(line, "v ", 2) == 0) {
-		err = parse_vertex(line + 2, dst);
+	if (strncmp(line, "v ", 2) == 0) {
+		err = parse_vertex(line, dst);
 	}
-	else if (memcmp(line, "f ", 2) == 0) {
-		err = parse_face(line + 2, dst);
+	else if (strncmp(line, "f ", 2) == 0) {
+		err = parse_face(line, dst);
 	}
 
 	return err;
