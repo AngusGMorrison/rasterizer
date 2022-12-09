@@ -15,7 +15,6 @@
 // Global variables for execution status and game loop.
 bool is_running = false;
 Uint64 prev_frame_time = 0;
-vec3_t camera_position = { 0, 0, 0 };
 triangle_t* triangles_to_render = NULL; // dynamic array of triangles to render
 
 int setup(void) {
@@ -27,7 +26,36 @@ int setup(void) {
 		window_width,
 		window_height
 	);
-	return load_mesh("assets/f22.obj");
+	return load_mesh("assets/cube.obj");
+}
+
+void process_keydown(SDL_KeyCode key) {
+	switch (key) {
+	case SDLK_ESCAPE:
+		is_running = false;
+		break;
+	case SDLK_1:
+		render_mode = RENDER_MODE_VERTEX;
+		break;
+	case SDLK_2:
+		render_mode = RENDER_MODE_VERTEX_WIREFRAME;
+		break;
+	case SDLK_3:
+		render_mode = RENDER_MODE_WIREFRAME;
+		break;
+	case SDLK_4:
+		render_mode = RENDER_MODE_SOLID;
+		break;
+	case SDLK_5:
+		render_mode = RENDER_MODE_SOLID_WIREFRAME;
+		break;
+	case SDLK_c:
+		enable_backface_culling = !enable_backface_culling;
+		break;
+	default:
+		// Do nothing.
+		break;
+	}
 }
 
 void process_input(void) {
@@ -38,9 +66,7 @@ void process_input(void) {
 		is_running = false;
 		break;
 	case SDL_KEYDOWN:
-		if (event.key.keysym.sym == SDLK_ESCAPE) {
-			is_running = false;
-		}
+		process_keydown(event.key.keysym.sym);
 		break;
 	}
 }
@@ -51,22 +77,6 @@ void wait_for_next_frame(void) {
 		SDL_Delay(FRAME_TARGET_TIME - elapsed);
 	}
 	prev_frame_time = SDL_GetTicks64();
-}
-
-
-bool shouldCullFace(vec3_t* vertices) {
-	vec3_t a = vertices[0];
-	vec3_t b = vertices[1];
-	vec3_t c = vertices[2];
-	vec3_t ab = vec3_normalize(vec3_sub(b, a));
-	vec3_t ac = vec3_normalize(vec3_sub(c, a));
-	vec3_t n = vec3_normalize(vec3_cross(ab, ac));
-	vec3_t acam = vec3_sub(camera_position, a);
-
-	if (vec3_dot(n, acam) <= 0) {
-		return true;
-	}
-	return false;
 }
 
 void update(void) {
@@ -92,7 +102,7 @@ void update(void) {
 			vertices[j] = vec3_translate(transformed, 0, 0, -5);
 		}
 
-		if (shouldCullFace(vertices)) {
+		if (shouldCull(vertices)) {
 			continue;
 		}
 
@@ -107,12 +117,10 @@ void update(void) {
 }
 
 void render(void) {
-	draw_grid();
-
+	triangleRenderFunc renderTriangle = triangleRendererForMode();
 	int len = array_len(triangles_to_render);
 	for (int i = 0; i < len; i++) {
-		fill_triangle(triangles_to_render[i], WHITE);
-		draw_triangle(triangles_to_render[i], BLACK);
+		renderTriangle(triangles_to_render[i]);
 	}
 
 	render_color_buffer();

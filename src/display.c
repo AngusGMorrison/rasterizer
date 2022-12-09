@@ -3,12 +3,13 @@
 const int FPS = 60;
 const uint32_t FRAME_TARGET_TIME = 1000 / FPS;
 const int GRID_SPACING_PX = 10;
+const int VERTEX_RECT_WIDTH_PX = 5;
 
 const uint32_t BLACK = 0xFF000000;
-const uint32_t YELLOW = 0xFFFFFF00;
 const uint32_t GREEN = 0xFF00FF00;
+const uint32_t RED = 0xFFFF0000;
 const uint32_t WHITE = 0xFFFFFFFF;
-
+const uint32_t YELLOW = 0xFFFFFF00;
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
@@ -16,6 +17,9 @@ uint32_t* color_buffer = NULL;
 SDL_Texture* color_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 600;
+vec3_t camera_position = { 0, 0, 0 };
+render_mode_t render_mode = RENDER_MODE_SOLID_WIREFRAME;
+bool enable_backface_culling = true;
 
 bool initialize_window(void) {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -49,6 +53,70 @@ bool initialize_window(void) {
 
 	return true;
 }
+
+void render_triangle_vertices(triangle_t t) {
+	for (int j = 0; j < 3; j++) {
+		vec2_t point = t.points[j];
+		draw_rectangle(point.x, point.y, VERTEX_RECT_WIDTH_PX, VERTEX_RECT_WIDTH_PX, RED);
+	}
+}
+
+void render_triangle_vertex_wireframe(triangle_t t) {
+	draw_triangle(t, WHITE);
+	render_triangle_vertices(t);
+}
+
+void render_triangle_wireframe(triangle_t t) {
+	draw_triangle(t, GREEN);
+}
+
+void render_triangle_solid(triangle_t t) {
+	fill_triangle(t, WHITE);
+}
+
+void render_triangle_solid_wireframe(triangle_t t) {
+	render_triangle_solid(t);
+	draw_triangle(t, BLACK);
+}
+
+triangleRenderFunc triangleRendererForMode() {
+	switch (render_mode) {
+	case RENDER_MODE_VERTEX:
+		return &render_triangle_vertices;
+		break;
+	case RENDER_MODE_WIREFRAME:
+		return &render_triangle_wireframe;
+		break;
+	case RENDER_MODE_VERTEX_WIREFRAME:
+		return &render_triangle_vertex_wireframe;
+		break;
+	case RENDER_MODE_SOLID:
+		return &render_triangle_solid;
+		break;
+	default:
+		return &render_triangle_solid_wireframe;
+	}
+}
+
+bool shouldCull(vec3_t* vertices) {
+	if (!enable_backface_culling) {
+		return false;
+	}
+
+	vec3_t a = vertices[0];
+	vec3_t b = vertices[1];
+	vec3_t c = vertices[2];
+	vec3_t ab = vec3_normalize(vec3_sub(b, a));
+	vec3_t ac = vec3_normalize(vec3_sub(c, a));
+	vec3_t n = vec3_normalize(vec3_cross(ab, ac));
+	vec3_t acam = vec3_sub(camera_position, a);
+
+	if (vec3_dot(n, acam) <= 0) {
+		return true;
+	}
+	return false;
+}
+
 
 // TODO: Convert all draw methods to use vecs and triangles until the last possible moment.
 
