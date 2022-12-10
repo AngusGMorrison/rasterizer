@@ -6,6 +6,7 @@
 
 #include "array.h"
 #include "display.h"
+#include "matrix.h"
 #include "mesh.h"
 #include "must.h"
 #include "obj_parser.h"
@@ -26,9 +27,7 @@ int setup(void) {
 		window_width,
 		window_height
 	);
-	// return load_mesh("assets/cube.obj");
-	load_cube();
-	return 0;
+	return load_mesh("assets/f22.obj");
 }
 
 void process_keydown(SDL_KeyCode key) {
@@ -88,6 +87,16 @@ void update(void) {
 	mesh.rotation.x += 0.05;
 	mesh.rotation.y += 0.05;
 	mesh.rotation.z += 0.05;
+	mesh.scale.x += 0.002;
+	mesh.scale.y += 0.001;
+	mesh.translation.x += 0.01;
+	mesh.translation.z = 5.0;
+
+	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+	mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+	mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
+	mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
+	mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
 	vec3_t vertices[3];
 	int faces = array_len(mesh.faces);
@@ -98,10 +107,13 @@ void update(void) {
 		vertices[2] = mesh.vertices[face.c - 1];
 
 		for (int j = 0; j < 3; j++) {
-			vec3_t transformed = vec3_rotate_x(vertices[j], mesh.rotation.x);
-			transformed = vec3_rotate_y(transformed, mesh.rotation.y);
-			transformed = vec3_rotate_z(transformed, mesh.rotation.z);
-			vertices[j] = vec3_translate(transformed, 0, 0, -5);
+			vec4_t conformable = vec4_from_vec3(vertices[j]);
+			vec4_t transformed = mat4_mul_vec4(rotation_matrix_x, conformable);
+			transformed = mat4_mul_vec4(rotation_matrix_y, transformed);
+			transformed = mat4_mul_vec4(rotation_matrix_z, transformed);
+			transformed = mat4_mul_vec4(scale_matrix, transformed);
+			transformed = mat4_mul_vec4(translation_matrix, transformed);
+			vertices[j] = vec3_from_vec4(transformed);
 		}
 
 		if (shouldCull(vertices)) {
@@ -111,28 +123,31 @@ void update(void) {
 		triangle_t triangle = {
 			.color = face.color
 		};
-		float total_depth = 0;
+		float total_depth = 0.0;
 		for (int j = 0; j < 3; j++) {
 			vec2_t projected = vec3_project(vertices[j]);
 			triangle.points[j] = vec2_translate(projected, window_width / 2, window_height / 2);
 			total_depth += vertices[j].z;
 		}
-		triangle.avg_depth = total_depth / 3;
+		triangle.avg_depth = total_depth / 3.0;
 
 		array_push(triangles_to_render, triangle);
 	}
 }
 
+// Render triangles using the painter's algorithm, starting with the deepest triangles and painting
+// over them with shallower ones.
 void render(void) {
-	triangleRenderFunc renderTriangle = triangleRendererForMode();
-	int len = array_len(triangles_to_render);
 	quick_sort(
 		triangles_to_render,
 		array_len(triangles_to_render),
 		sizeof(triangle_t),
 		triangle_less_depth
 	);
-	for (int i = 0; i < len; i++) {
+	triangleRenderFunc renderTriangle = triangleRendererForMode();
+	int len = array_len(triangles_to_render);
+	for (int i = len - 1; i >= 0; i--) {
+		printf("avg depth: %.1f\n", triangles_to_render[i].avg_depth);
 		renderTriangle(triangles_to_render[i]);
 	}
 

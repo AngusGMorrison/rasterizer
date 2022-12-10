@@ -15,6 +15,11 @@ typedef struct vec3_t {
 	float z;
 } vec3_t;
 
+typedef struct vec4_t {
+	float x, y, z, w;
+} vec4_t;
+
+
 float vec2_magnitude(vec2_t v);
 float vec2_gradient(vec2_t a, vec2_t b);
 float vec2_inv_gradient(vec2_t a, vec2_t b);
@@ -27,6 +32,7 @@ vec2_t vec2_translate(vec2_t v, int dx, int dy);
 vec2_t vec2_normalize(vec2_t v);
 bool vec2_less_y(const void* a, const void* b);
 
+vec3_t vec3_from_vec4(vec4_t v);
 float vec3_magnitude(vec3_t v);
 vec3_t vec3_add(vec3_t a, vec3_t b);
 vec3_t vec3_sub(vec3_t a, vec3_t b);
@@ -40,5 +46,7 @@ vec3_t vec3_rotate_x(vec3_t v, float angle);
 vec3_t vec3_rotate_y(vec3_t v, float angle);
 vec3_t vec3_rotate_z(vec3_t v, float angle);
 vec3_t vec3_normalize(vec3_t v);
+
+vec4_t vec4_from_vec3(vec3_t v);
 
 #endif

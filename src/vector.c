@@ -77,6 +77,11 @@ vec2_t vec3_project(vec3_t point) {
 	return projected_point;
 }
 
+vec3_t vec3_from_vec4(vec4_t v) {
+	vec3_t result = { v.x, v.y, v.z };
+	return result;
+}
+
 vec3_t vec3_translate(vec3_t point, int dx, int dy, int dz) {
 	point.x += dx;
 	point.y += dy;
@@ -164,4 +169,9 @@ float vec3_dot(vec3_t a, vec3_t b) {
 
 vec3_t vec3_normalize(vec3_t v) {
 	return vec3_sdiv(v, vec3_magnitude(v));
+}
+
+vec4_t vec4_from_vec3(vec3_t v) {
+	vec4_t result = { v.x, v.y, v.z, 1.0 };
+	return result;
 }

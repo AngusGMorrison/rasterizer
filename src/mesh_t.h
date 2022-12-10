@@ -10,6 +10,8 @@ typedef struct mesh_t {
 	vec3_t* vertices; // dynamic array
 	face_t* faces; // dynamic array
 	vec3_t rotation;
+	vec3_t scale;
+	vec3_t translation;
 } mesh_t;
 
 #endif
