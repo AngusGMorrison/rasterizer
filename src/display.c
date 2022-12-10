@@ -5,15 +5,9 @@ const uint32_t FRAME_TARGET_TIME = 1000 / FPS;
 const int GRID_SPACING_PX = 10;
 const int VERTEX_RECT_WIDTH_PX = 5;
 
-const uint32_t BLACK = 0xFF000000;
-const uint32_t GREEN = 0xFF00FF00;
-const uint32_t RED = 0xFFFF0000;
-const uint32_t WHITE = 0xFFFFFFFF;
-const uint32_t YELLOW = 0xFFFFFF00;
-
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
-uint32_t* color_buffer = NULL;
+color_t* color_buffer = NULL;
 SDL_Texture* color_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 600;
@@ -71,7 +65,7 @@ void render_triangle_wireframe(triangle_t t) {
 }
 
 void render_triangle_solid(triangle_t t) {
-	fill_triangle(t, WHITE);
+	fill_triangle(t);
 }
 
 void render_triangle_solid_wireframe(triangle_t t) {
@@ -120,7 +114,7 @@ bool shouldCull(vec3_t* vertices) {
 
 // TODO: Convert all draw methods to use vecs and triangles until the last possible moment.
 
-void draw_pixel(int x, int y, uint32_t color) {
+void draw_pixel(int x, int y, color_t color) {
 	if (x < 0 || x >= window_width || y < 0 || y >= window_height) {
 		return;
 	}
@@ -138,7 +132,7 @@ void draw_grid(void) {
 	}
 }
 
-void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
+void draw_line(int x0, int y0, int x1, int y1, color_t color) {
 	int dx = x1 - x0;
 	int dy = y1 - y0;
 	int abs_dx = abs(dx);
@@ -160,7 +154,7 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
 	}
 }
 
-void draw_triangle(triangle_t t, uint32_t color) {
+void draw_triangle(triangle_t t, color_t color) {
 	draw_line(t.points[0].x, t.points[0].y, t.points[1].x, t.points[1].y, color);
 	draw_line(t.points[1].x, t.points[1].y, t.points[2].x, t.points[2].y, color);
 	draw_line(t.points[2].x, t.points[2].y, t.points[0].x, t.points[0].y, color);
@@ -194,27 +188,27 @@ and calculating the difference in the x positions of the opposing slopes.
 		  /_____\
 		 1       2
 */
-void fill_flat_bottom_triangle(const triangle_t* triangle, uint32_t color) {
+void fill_flat_bottom_triangle(const triangle_t* t) {
 	// Calculate the change in x with respect to y (inverse gradient) for both sloped sides of the
 	// flat-bottomed triangle. We know that y (representing the current scan line) will increase
 	// monotonically – the change in x is our unknown.
-	float inv_m_left = vec2_inv_gradient(triangle->points[0], triangle->points[1]);
-	float inv_m_right = vec2_inv_gradient(triangle->points[2], triangle->points[0]);
-	float x_start = triangle->points[0].x;
+	float inv_m_left = vec2_inv_gradient(t->points[0], t->points[1]);
+	float inv_m_right = vec2_inv_gradient(t->points[2], t->points[0]);
+	float x_start = t->points[0].x;
 	float x_end = x_start;
 
 
 	// Fill the triangle from top to bottom.
-	float max_width = fabsf(triangle->points[2].x - triangle->points[1].x);
-	for (int y = triangle->points[0].y; y <= (int)triangle->points[2].y; y++) {
-		draw_line(x_start, y, x_end, y, color);
+	float max_width = fabsf(t->points[2].x - t->points[1].x);
+	for (int y = t->points[0].y; y <= (int)t->points[2].y; y++) {
+		draw_line(x_start, y, x_end, y, t->color);
 
 		x_start += inv_m_left;
 		x_end += inv_m_right;
 		// Prevent x_start from escaping the bounds of the triangle when inv_m is large.
 		if (fabsf(x_end - x_start) > max_width) {
-			x_start = triangle->points[1].x;
-			x_end = triangle->points[2].x;
+			x_start = t->points[1].x;
+			x_end = t->points[2].x;
 		}
 	}
 }
@@ -229,7 +223,7 @@ and calculating the difference in the x positions of the opposing slopes.
 			\ /
 			 2
 */
-void fill_flat_top_triangle(const triangle_t* t, uint32_t color) {
+void fill_flat_top_triangle(const triangle_t* t) {
 	// Calculate the change in x with respect to y (inverse gradient) for both sloped sides of the
 	// flat-topped triangle. We know that y (representing the current scan line) will decrease
 	// monotonically – the change in x is our unknown.
@@ -242,7 +236,7 @@ void fill_flat_top_triangle(const triangle_t* t, uint32_t color) {
 	// fill_flat_bottom_triangle to avoid double-rendering the join between top and bottom.
 	float max_width = fabsf(t->points[1].x - t->points[0].x);
 	for (int y = t->points[2].y; y > (int)t->points[0].y; y--) {
-		draw_line(x_start, y, x_end, y, color);
+		draw_line(x_start, y, x_end, y, t->color);
 
 		// We're moving "against" the gradient, so subtract m on each iteration.
 		x_start -= inv_m_left;
@@ -256,7 +250,7 @@ void fill_flat_top_triangle(const triangle_t* t, uint32_t color) {
 }
 
 // TODO: Pass by pointer
-void fill_triangle(triangle_t t, uint32_t color) {
+void fill_triangle(triangle_t t) {
 	triangle_sort_vertices_y(&t);
 	vec2_t a = t.points[0];
 	vec2_t b = t.points[1];
@@ -266,11 +260,11 @@ void fill_triangle(triangle_t t, uint32_t color) {
 	// operation. Otherwise, attempting to fill the zero-height opposite half will cause a zero
 	// division error.
 	if (float_approx_equal(a.y, b.y)) {
-		fill_flat_top_triangle(&t, color);
+		fill_flat_top_triangle(&t);
 		return;
 	}
 	if (float_approx_equal(b.y, c.y)) {
-		fill_flat_bottom_triangle(&t, color);
+		fill_flat_bottom_triangle(&t);
 		return;
 	}
 
@@ -278,17 +272,19 @@ void fill_triangle(triangle_t t, uint32_t color) {
 	// triangle similarity.
 	vec2_t m = triangle_horizontal_b_hyp_intercept(&t);
 	triangle_t flat_bottom = {
-		.points = {a, b, m}
+		.points = {a, b, m},
+		.color = t.color
 	};
 	triangle_t flat_top = {
-		.points = {b, m, c}
+		.points = {b, m, c},
+		.color = t.color
 	};
 
-	fill_flat_bottom_triangle(&flat_bottom, color);
-	fill_flat_top_triangle(&flat_top, color);
+	fill_flat_bottom_triangle(&flat_bottom);
+	fill_flat_top_triangle(&flat_top);
 }
 
-void draw_rectangle(int x, int y, int w, int h, uint32_t color) {
+void draw_rectangle(int x, int y, int w, int h, color_t color) {
 	for (int i = 0; i < w; i++) {
 		int currentX = x + i;
 		for (int j = 0; j < h; j++) {
@@ -303,7 +299,7 @@ void render_color_buffer(void) {
 		color_buffer_texture,
 		NULL,
 		color_buffer,
-		(window_width * sizeof(uint32_t))
+		(window_width * sizeof(color_t))
 	);
 	SDL_RenderCopy(
 		renderer,
@@ -313,7 +309,7 @@ void render_color_buffer(void) {
 	);
 }
 
-void clear_color_buffer(uint32_t color) {
+void clear_color_buffer(color_t color) {
 	int pixels = window_height * window_width;
 	for (int i = 0; i < pixels; i++) {
 		color_buffer[i] = color;

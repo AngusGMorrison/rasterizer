@@ -18,7 +18,7 @@ Uint64 prev_frame_time = 0;
 triangle_t* triangles_to_render = NULL; // dynamic array of triangles to render
 
 int setup(void) {
-	color_buffer = must_malloc(sizeof(uint32_t) * window_width * window_height);
+	color_buffer = must_malloc(sizeof(color_t) * window_width * window_height);
 	color_buffer_texture = SDL_CreateTexture(
 		renderer,
 		SDL_PIXELFORMAT_ARGB8888,
@@ -26,7 +26,9 @@ int setup(void) {
 		window_width,
 		window_height
 	);
-	return load_mesh("assets/cube.obj");
+	// return load_mesh("assets/cube.obj");
+	load_cube();
+	return 0;
 }
 
 void process_keydown(SDL_KeyCode key) {
@@ -106,11 +108,16 @@ void update(void) {
 			continue;
 		}
 
-		triangle_t triangle;
+		triangle_t triangle = {
+			.color = face.color
+		};
+		float total_depth = 0;
 		for (int j = 0; j < 3; j++) {
 			vec2_t projected = vec3_project(vertices[j]);
 			triangle.points[j] = vec2_translate(projected, window_width / 2, window_height / 2);
+			total_depth += vertices[j].z;
 		}
+		triangle.avg_depth = total_depth / 3;
 
 		array_push(triangles_to_render, triangle);
 	}
@@ -119,6 +126,12 @@ void update(void) {
 void render(void) {
 	triangleRenderFunc renderTriangle = triangleRendererForMode();
 	int len = array_len(triangles_to_render);
+	quick_sort(
+		triangles_to_render,
+		array_len(triangles_to_render),
+		sizeof(triangle_t),
+		triangle_less_depth
+	);
 	for (int i = 0; i < len; i++) {
 		renderTriangle(triangles_to_render[i]);
 	}

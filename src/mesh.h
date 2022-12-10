@@ -4,8 +4,10 @@
 #include <stdio.h>
 
 #include "array.h"
+#include "color.h"
 #include "mesh_t.h"
 #include "obj_parser.h"
+#include "display.h"
 #include "triangle.h"
 #include "vector.h"
 
