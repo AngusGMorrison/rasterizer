@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "array.h"
+#include "face.h"
 #include "mesh_t.h"
 #include "must.h"
 #include "triangle.h"

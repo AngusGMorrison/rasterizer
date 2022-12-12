@@ -7,7 +7,9 @@
 #include <SDL2/SDL.h>
 
 #include "color.h"
+#include "face.h"
 #include "float.h"
+#include "light.h"
 #include "matrix.h"
 #include "triangle.h"
 
@@ -15,6 +17,7 @@ extern const int FPS;
 extern const uint32_t FRAME_TARGET_TIME;
 extern const int GRID_SPACING_PX;
 extern const int VERTEX_RECT_WIDTH_PX;
+extern const light_t g_light;
 
 typedef void(*triangleRenderFunc) (triangle_t t);
 

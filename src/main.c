@@ -85,9 +85,9 @@ void update_mesh(void) {
 	mesh.rotation.x += 0.05;
 	mesh.rotation.y += 0.05;
 	mesh.rotation.z += 0.05;
-	mesh.scale.x += 0.002;
-	mesh.scale.y += 0.001;
-	mesh.translation.x += 0.01;
+	// mesh.scale.x += 0.002;
+	// mesh.scale.y += 0.001;
+	// mesh.translation.x += 0.01;
 	mesh.translation.z = 5.0;
 }
 
@@ -117,7 +117,7 @@ void update(void) {
 		}
 
 		triangle_t triangle = {
-			.color = face.color
+			.color = face_illuminate(vertices, g_light, face.color)
 		};
 		float total_depth = 0.0;
 		for (int j = 0; j < 3; j++) {

@@ -4,6 +4,9 @@ const int FPS = 60;
 const uint32_t FRAME_TARGET_TIME = 1000 / FPS;
 const int GRID_SPACING_PX = 10;
 const int VERTEX_RECT_WIDTH_PX = 5;
+const light_t g_light = {
+	{.x = 1, .y = -1, .z = 1}
+};
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
@@ -99,14 +102,9 @@ bool shouldCull(vec3_t* vertices) {
 		return false;
 	}
 
-	vec3_t a = vertices[0];
-	vec3_t b = vertices[1];
-	vec3_t c = vertices[2];
-	vec3_t ab = vec3_normalize(vec3_sub(b, a));
-	vec3_t ac = vec3_normalize(vec3_sub(c, a));
-	vec3_t n = vec3_normalize(vec3_cross(ab, ac));
+	vec3_t a = vec3_normalize(vertices[0]);
+	vec3_t n = face_normal(vertices);
 	vec3_t acam = vec3_sub(camera_position, a);
-
 	if (vec3_dot(n, acam) <= 0) {
 		return true;
 	}

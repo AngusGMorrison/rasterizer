@@ -14,8 +14,9 @@ int parse_vertex(char* line, mesh_t* dst) {
 	return 0;
 }
 
+// parse_face parses a single face from an obj file.
 int parse_face(char* line, mesh_t* dst) {
-	face_t face;
+	face_t face = new_face();
 	face_t texture;
 	face_t normal;
 	int filled = sscanf(
