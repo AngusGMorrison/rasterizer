@@ -1,6 +1,9 @@
 #include "vector.h"
 
-const float fov_factor = 640;
+vec2_t vec2_from_vec3(vec3_t v) {
+	vec2_t result = { v.x, v.y };
+	return result;
+}
 
 float vec2_magnitude(vec2_t v) {
 	return sqrt(v.x * v.x + v.y * v.y);
@@ -68,17 +71,13 @@ float vec3_magnitude(vec3_t v) {
 	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-// vec3_project receives a 3D vector and returns projected 2D point.
-vec2_t vec3_project(vec3_t point) {
-	vec2_t projected_point = {
-		.x = (fov_factor * point.x) / point.z,
-		.y = (fov_factor * point.y) / point.z
-	};
-	return projected_point;
-}
-
 vec3_t vec3_from_vec4(vec4_t v) {
 	vec3_t result = { v.x, v.y, v.z };
+	if (v.w != 0.0) {
+		result.x /= v.w;
+		result.y /= v.w;
+		result.z /= v.w;
+	}
 	return result;
 }
 

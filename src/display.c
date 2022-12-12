@@ -14,6 +14,8 @@ int window_height = 600;
 vec3_t camera_position = { 0, 0, 0 };
 render_mode_t render_mode = RENDER_MODE_SOLID_WIREFRAME;
 bool enable_backface_culling = true;
+mat4_t projection_matrix;
+float fov_rads = M_PI / 3;
 
 bool initialize_window(void) {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {

@@ -27,6 +27,7 @@ int setup(void) {
 		window_width,
 		window_height
 	);
+	projection_matrix = mat4_make_perspective(fov_rads, window_height / (float)window_width, 0.1, 100.0);
 	return load_mesh("assets/f22.obj");
 }
 
@@ -72,7 +73,7 @@ void process_input(void) {
 	}
 }
 
-void wait_for_next_frame(void) {
+void await_frame(void) {
 	uint32_t elapsed = SDL_GetTicks64() - prev_frame_time;
 	if (elapsed < FRAME_TARGET_TIME) {
 		SDL_Delay(FRAME_TARGET_TIME - elapsed);
@@ -80,10 +81,7 @@ void wait_for_next_frame(void) {
 	prev_frame_time = SDL_GetTicks64();
 }
 
-void update(void) {
-	wait_for_next_frame();
-	array_clear(triangles_to_render, sizeof(triangle_t));
-
+void update_mesh(void) {
 	mesh.rotation.x += 0.05;
 	mesh.rotation.y += 0.05;
 	mesh.rotation.z += 0.05;
@@ -91,12 +89,14 @@ void update(void) {
 	mesh.scale.y += 0.001;
 	mesh.translation.x += 0.01;
 	mesh.translation.z = 5.0;
+}
 
-	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-	mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
-	mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
-	mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
-	mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+void update(void) {
+	await_frame();
+	array_clear(triangles_to_render, sizeof(triangle_t));
+
+	update_mesh();
+	mat4_t world_matrix = mesh_to_world_matrix(&mesh);
 
 	vec3_t vertices[3];
 	int faces = array_len(mesh.faces);
@@ -108,11 +108,7 @@ void update(void) {
 
 		for (int j = 0; j < 3; j++) {
 			vec4_t conformable = vec4_from_vec3(vertices[j]);
-			vec4_t transformed = mat4_mul_vec4(rotation_matrix_x, conformable);
-			transformed = mat4_mul_vec4(rotation_matrix_y, transformed);
-			transformed = mat4_mul_vec4(rotation_matrix_z, transformed);
-			transformed = mat4_mul_vec4(scale_matrix, transformed);
-			transformed = mat4_mul_vec4(translation_matrix, transformed);
+			vec4_t transformed = mat4_mul_vec4(world_matrix, conformable);
 			vertices[j] = vec3_from_vec4(transformed);
 		}
 
@@ -125,8 +121,16 @@ void update(void) {
 		};
 		float total_depth = 0.0;
 		for (int j = 0; j < 3; j++) {
-			vec2_t projected = vec3_project(vertices[j]);
-			triangle.points[j] = vec2_translate(projected, window_width / 2, window_height / 2);
+			// Project into the canonical view (1x1x1 box - Normalized Device Coordinates).
+			vec3_t projected = mat4_project_vec3(projection_matrix, vertices[j]);
+			// Scale to screen size.
+			projected.x *= window_width / 2.0;
+			projected.y *= window_height / 2.0;
+			// Translate to centre of screen.
+			projected.x += window_width / 2.0;
+			projected.y += window_height / 2.0;
+			// Save output.
+			triangle.points[j] = vec2_from_vec3(projected);
 			total_depth += vertices[j].z;
 		}
 		triangle.avg_depth = total_depth / 3.0;
@@ -147,7 +151,6 @@ void render(void) {
 	triangleRenderFunc renderTriangle = triangleRendererForMode();
 	int len = array_len(triangles_to_render);
 	for (int i = len - 1; i >= 0; i--) {
-		printf("avg depth: %.1f\n", triangles_to_render[i].avg_depth);
 		renderTriangle(triangles_to_render[i]);
 	}
 

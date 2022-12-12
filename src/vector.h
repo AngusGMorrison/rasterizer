@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef struct vec2_t {
 	float x;
@@ -19,7 +20,7 @@ typedef struct vec4_t {
 	float x, y, z, w;
 } vec4_t;
 
-
+vec2_t vec2_from_vec3(vec3_t v);
 float vec2_magnitude(vec2_t v);
 float vec2_gradient(vec2_t a, vec2_t b);
 float vec2_inv_gradient(vec2_t a, vec2_t b);
@@ -40,7 +41,6 @@ vec3_t vec3_sprod(vec3_t v, float s);
 vec3_t vec3_sdiv(vec3_t v, float s);
 vec3_t vec3_cross(vec3_t a, vec3_t b);
 float vec3_dot(vec3_t a, vec3_t b);
-vec2_t vec3_project(vec3_t v);
 vec3_t vec3_translate(vec3_t v, int dx, int dy, int dz);
 vec3_t vec3_rotate_x(vec3_t v, float angle);
 vec3_t vec3_rotate_y(vec3_t v, float angle);

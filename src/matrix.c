@@ -100,3 +100,39 @@ vec4_t mat4_mul_vec4(mat4_t m, vec4_t v) {
 	result.w = m.m[3][0] * v.x + m.m[3][1] * v.y + m.m[3][2] * v.z + m.m[3][3] * v.w;
 	return result;
 }
+
+mat4_t mat4_mul(mat4_t a, mat4_t b) {
+	mat4_t m = { {0} };
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			for (int k = 0; k < 4; k++) {
+				m.m[i][k] += a.m[i][j] * b.m[j][k];
+			}
+		}
+	}
+	return m;
+}
+
+/*
+|  (h/w)cot(fov/2))           0                          0  0  |
+|                 0  cot(fov/2)                          0  0  |
+|                 0           0  zf/(zf-zn)  -(zf*zn)/(zf-zn)  |
+|                 0           0           1                 0  |
+*/
+mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
+	mat4_t m = { {0} };
+	float cot_half_fov = 1 / tan(fov / 2);
+	float dz = zfar - znear;
+	m.m[0][0] = aspect * cot_half_fov;
+	m.m[1][1] = cot_half_fov;
+	m.m[2][2] = zfar / dz;
+	m.m[2][3] = (-zfar * znear) / dz;
+	m.m[3][2] = 1;
+	return m;
+}
+
+vec3_t mat4_project_vec3(mat4_t m, vec3_t v) {
+	vec4_t homogeneous = vec4_from_vec3(v);
+	vec4_t projected = mat4_mul_vec4(m, homogeneous);
+	return vec3_from_vec4(projected);
+}

@@ -8,6 +8,7 @@
 
 #include "color.h"
 #include "float.h"
+#include "matrix.h"
 #include "triangle.h"
 
 extern const int FPS;
@@ -33,6 +34,8 @@ extern SDL_Texture* color_buffer_texture;
 extern int window_width;
 extern int window_height;
 extern bool enable_backface_culling;
+extern mat4_t projection_matrix;
+extern float fov_rads;
 
 bool initialize_window(void);
 triangleRenderFunc triangleRendererForMode();

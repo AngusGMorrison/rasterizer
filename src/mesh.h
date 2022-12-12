@@ -8,6 +8,7 @@
 #include "mesh_t.h"
 #include "obj_parser.h"
 #include "display.h"
+#include "matrix.h"
 #include "triangle.h"
 #include "vector.h"
 
@@ -21,5 +22,6 @@ extern mesh_t mesh;
 
 void load_cube(void);
 int load_mesh(char* path);
+mat4_t mesh_to_world_matrix(mesh_t* mesh);
 
 #endif
