@@ -1,3 +1,5 @@
+// mesh.h provides functions to read a 3D object from an .obj file and the data structures to
+// represent it.
 #ifndef MESH_H
 #define MESH_H
 
@@ -11,8 +13,17 @@
 #include "texture.h"
 #include "vector.h"
 
+/*
+Constants
+*/
+
 #define N_CUBE_VERTICES 8
 #define N_CUBE_FACES (6 * 2) // 6 faces, 2 triangles per face
+
+
+/*
+Structs
+*/
 
 // mesh_face_t stores the indices of 3 vectors in 3D space that represent the vertices a triangular
 // face.
@@ -27,6 +38,7 @@ typedef struct mesh_face_t {
 	color_t color;
 } mesh_face_t;
 
+// mesh_t represents a whole 3D object and its position in space.
 typedef struct mesh_t {
 	vec3_t* vertices; // dynamic array
 	mesh_face_t* faces; // dynamic array
@@ -35,18 +47,27 @@ typedef struct mesh_t {
 	vec3_t translation;
 } mesh_t;
 
-extern vec3_t cube_vertices[N_CUBE_VERTICES];
-extern mesh_face_t cube_faces[N_CUBE_FACES];
-extern mesh_t mesh;
+// Global mesh.
+extern mesh_t g_mesh;
 
-mesh_face_t new_mesh_face();
-vec3_t mesh_face_vertex_a(mesh_face_t mf);
-vec3_t mesh_face_vertex_b(mesh_face_t mf);
-vec3_t mesh_face_vertex_c(mesh_face_t mf);
+/*
+Functions
+*/
 
+// Getters to expedite vertex lookup.
+vec3_t mesh_face_vertex_a(const mesh_face_t* mf);
+vec3_t mesh_face_vertex_b(const mesh_face_t* mf);
+vec3_t mesh_face_vertex_c(const mesh_face_t* mf);
+
+// Load a cube from hard-coded vertices and texture data.
 void load_cube(void);
-int load_mesh(char* path);
-mat4_t mesh_to_world_matrix(mesh_t* mesh);
+
+// Load a mesh from the given .obj file.
+int load_mesh(const char* path);
+
+// Returns a matrix representing the current scale, position and orientation of the mesh in space,
+// which can be used to transform each face ready for projection onto the viewing plane.
+mat4_t mesh_to_world_matrix(const mesh_t* mesh);
 
 
 

@@ -1,7 +1,7 @@
 #include "vector.h"
 
-vec2_t vec2_from_vec3(vec3_t v) {
-	vec2_t result = { v.x, v.y };
+vec2_t vec2_from_vec3(const vec3_t* v) {
+	vec2_t result = { v->x, v->y };
 	return result;
 }
 
@@ -63,118 +63,118 @@ bool vec2_less_y(const void* a, const void* b) {
 }
 
 
-float vec3_magnitude(vec3_t v) {
-	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+float vec3_magnitude(const vec3_t* v) {
+	return sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
 }
 
-vec3_t vec3_from_vec4(vec4_t v) {
-	vec3_t result = { v.x, v.y, v.z };
-	if (v.w != 0.0) {
-		result.x /= v.w;
-		result.y /= v.w;
-		result.z /= v.w;
+vec3_t vec3_from_vec4(const vec4_t* v) {
+	vec3_t result = { v->x, v->y, v->z };
+	if (v->w != 0.0) {
+		result.x /= v->w;
+		result.y /= v->w;
+		result.z /= v->w;
 	}
 	return result;
 }
 
-vec3_t vec3_translate(vec3_t point, int dx, int dy, int dz) {
-	point.x += dx;
-	point.y += dy;
-	point.z += dz;
-	return point;
+vec3_t vec3_translate(const vec3_t* v, int dx, int dy, int dz) {
+	return (vec3_t) {
+		.x = v->x + dx,
+		.y = v->y + dy,
+		.z = v->z + dz,
+	};
 }
 
-vec3_t vec3_rotate_x(vec3_t v, float angle) {
+vec3_t vec3_rotate_x(const vec3_t* v, float angle) {
 	float sin_a = sin(angle);
 	float cos_a = cos(angle);
-	vec3_t rotated = {
-		.x = v.x,
-		.y = v.y * cos_a - v.z * sin_a,
-		.z = v.y * sin_a + v.z * cos_a
+	return (vec3_t) {
+		.x = v->x,
+		.y = v->y * cos_a - v->z * sin_a,
+		.z = v->y * sin_a + v->z * cos_a
 	};
-	return rotated;
 }
 
-vec3_t vec3_rotate_y(vec3_t v, float angle) {
+vec3_t vec3_rotate_y(const vec3_t* v, float angle) {
 	float sin_a = sin(angle);
 	float cos_a = cos(angle);
-	vec3_t rotated = {
-		.x = v.x * cos_a - v.z * sin_a,
-		.y = v.y,
-		.z = v.x * sin_a + v.z * cos_a
+	return (vec3_t) {
+		.x = v->x * cos_a - v->z * sin_a,
+		.y = v->y,
+		.z = v->x * sin_a + v->z * cos_a
 	};
-	return rotated;
 }
 
-vec3_t vec3_rotate_z(vec3_t v, float angle) {
+vec3_t vec3_rotate_z(const vec3_t* v, float angle) {
 	float sin_a = sin(angle);
 	float cos_a = cos(angle);
-	vec3_t rotated = {
-		.x = v.x * cos_a - v.y * sin_a,
-		.y = v.x * sin_a + v.y * cos_a,
-		.z = v.z
+	return (vec3_t) {
+		.x = v->x * cos_a - v->y * sin_a,
+		.y = v->x * sin_a + v->y * cos_a,
+		.z = v->z
 	};
-	return rotated;
 }
 
-vec3_t vec3_add(vec3_t a, vec3_t b) {
-	a.x += b.x;
-	a.y += b.y;
-	a.z += b.z;
-	return a;
-}
-
-vec3_t vec3_sub(vec3_t a, vec3_t b) {
-	a.x -= b.x;
-	a.y -= b.y;
-	a.z -= b.z;
-	return a;
-}
-
-vec3_t vec3_sprod(vec3_t v, float s) {
-	v.x *= s;
-	v.y *= s;
-	v.z *= s;
-	return v;
-}
-
-vec3_t vec3_sdiv(vec3_t v, float s) {
-	v.x /= s;
-	v.y /= s;
-	v.z /= s;
-	return v;
-}
-
-vec3_t vec3_cross(vec3_t a, vec3_t b) {
-	vec3_t prod = {
-		.x = a.y * b.z - a.z * b.y,
-		.y = a.z * b.x - a.x * b.z,
-		.z = a.x * b.y - a.y * b.x
+vec3_t vec3_add(const vec3_t* a, const vec3_t* b) {
+	return (vec3_t) {
+		.x = a->x + b->x,
+		.y = a->y + b->y,
+		.z = a->z + b->z
 	};
-	return prod;
 }
 
-float vec3_dot(vec3_t a, vec3_t b) {
+vec3_t vec3_sub(const vec3_t* a, const vec3_t* b) {
+	return (vec3_t) {
+		.x = a->x - b->x,
+		.y = a->y - b->y,
+		.z = a->z - b->z
+	};
+}
+
+vec3_t vec3_sprod(const vec3_t* v, float s) {
+	return (vec3_t) {
+		.x = v->x * s,
+		.y = v->y * s,
+		.z = v->z * s
+	};
+}
+
+vec3_t vec3_sdiv(const vec3_t* v, float s) {
+	return (vec3_t) {
+		.x = v->x / s,
+		.y = v->y / s,
+		.z = v->z / s
+	};
+}
+
+vec3_t vec3_cross(const vec3_t* a, const vec3_t* b) {
+	return (vec3_t) {
+		.x = a->y * b->z - a->z * b->y,
+		.y = a->z * b->x - a->x * b->z,
+		.z = a->x * b->y - a->y * b->x
+	};
+}
+
+float vec3_dot(const vec3_t* a, const vec3_t* b) {
 	float prod = 0;
-	prod += a.x * b.x;
-	prod += a.y * b.y;
-	prod += a.z * b.z;
+	prod += a->x * b->x;
+	prod += a->y * b->y;
+	prod += a->z * b->z;
 	return prod;
 }
 
-vec3_t vec3_normalize(vec3_t v) {
+vec3_t vec3_normalize(const vec3_t* v) {
 	return vec3_sdiv(v, vec3_magnitude(v));
 }
 
-vec3_t vec3_transform(vec3_t v, mat4_t m) {
+vec3_t vec3_transform(const vec3_t* v, const mat4_t* m) {
 	vec4_t homogeneous = vec4_from_vec3(v);
-	vec4_t transformed = mat4_mul_vec4(m, homogeneous);
-	return vec3_from_vec4(transformed);
+	vec4_t transformed = mat4_mul_vec4(m, &homogeneous);
+	return vec3_from_vec4(&transformed);
 }
 
-vec4_t vec4_from_vec3(vec3_t v) {
-	vec4_t result = { v.x, v.y, v.z, 1.0 };
-	return result;
+vec4_t vec4_from_vec3(const vec3_t* v) {
+	return (vec4_t) { v->x, v->y, v->z, 1.0 };
 }
 
 mat4_t mat4_identity(void) {
@@ -269,21 +269,21 @@ mat4_t mat4_make_rotation_z(float a) {
 	return m;
 }
 
-vec4_t mat4_mul_vec4(mat4_t m, vec4_t v) {
-	vec4_t result;
-	result.x = m.m[0][0] * v.x + m.m[0][1] * v.y + m.m[0][2] * v.z + m.m[0][3] * v.w;
-	result.y = m.m[1][0] * v.x + m.m[1][1] * v.y + m.m[1][2] * v.z + m.m[1][3] * v.w;
-	result.z = m.m[2][0] * v.x + m.m[2][1] * v.y + m.m[2][2] * v.z + m.m[2][3] * v.w;
-	result.w = m.m[3][0] * v.x + m.m[3][1] * v.y + m.m[3][2] * v.z + m.m[3][3] * v.w;
-	return result;
+vec4_t mat4_mul_vec4(const mat4_t* m, const vec4_t* v) {
+	return (vec4_t) {
+		.x = m->m[0][0] * v->x + m->m[0][1] * v->y + m->m[0][2] * v->z + m->m[0][3] * v->w,
+		.y = m->m[1][0] * v->x + m->m[1][1] * v->y + m->m[1][2] * v->z + m->m[1][3] * v->w,
+		.z = m->m[2][0] * v->x + m->m[2][1] * v->y + m->m[2][2] * v->z + m->m[2][3] * v->w,
+		.w = m->m[3][0] * v->x + m->m[3][1] * v->y + m->m[3][2] * v->z + m->m[3][3] * v->w
+	};
 }
 
-mat4_t mat4_mul(mat4_t a, mat4_t b) {
+mat4_t mat4_mul(const mat4_t* a, const mat4_t* b) {
 	mat4_t m = { {0} };
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			for (int k = 0; k < 4; k++) {
-				m.m[i][k] += a.m[i][j] * b.m[j][k];
+				m.m[i][k] += a->m[i][j] * b->m[j][k];
 			}
 		}
 	}
@@ -308,9 +308,9 @@ mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
 	return m;
 }
 
-vec2_t mat4_project_vec3(mat4_t m, vec3_t v) {
+vec2_t mat4_project_vec3(const mat4_t* m, const vec3_t* v) {
 	vec4_t homogeneous = vec4_from_vec3(v);
-	vec4_t projected = mat4_mul_vec4(m, homogeneous);
-	vec3_t reduced = vec3_from_vec4(projected);
-	return vec2_from_vec3(reduced);
+	vec4_t projected = mat4_mul_vec4(m, &homogeneous);
+	vec3_t reduced = vec3_from_vec4(&projected);
+	return vec2_from_vec3(&reduced);
 }

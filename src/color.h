@@ -1,8 +1,10 @@
+// color.h provides color primitives and helper functions.
 #ifndef COLOR_H
 #define COLOR_H
 
 #include <stdint.h>
 
+// color_t represents an ARGB color in 4 bytes.
 typedef uint32_t color_t;
 
 #define BLACK 0xFF000000
@@ -20,6 +22,8 @@ extern const color_t DEFAULT_BORDER_COLOR;
 extern const color_t DEFAULT_FILL_COLOR;
 extern const color_t DEFAULT_WIREFRAME_COLOR;
 
+// color_adjust_intensity returns a new color based on multiplying each of the ARGB fields of the
+// input color by the given factor. intensity must be >= 0.
 color_t color_adjust_intensity(color_t original, float intensity);
 
 #endif

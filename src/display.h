@@ -111,7 +111,7 @@ Functions
 bool initialize_window(void);
 
 // Render a triangle to the global color buffer according to the current render mode.
-void render_triangle(triangle_t t);
+void render_triangle(const triangle_t* t);
 
 // Render the color buffer to the global SDL texture.
 void render_color_buffer(void);

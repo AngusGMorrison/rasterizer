@@ -31,12 +31,17 @@ triangle_t new_triangle();
 
 // Construct a triangle by projecting a 3D face into 2D space. Preserves the color of the face and
 // calculates avg_depth from the face's vertices.
-triangle_t new_triangle_from_face(face_t f, mat4_t projection);
+triangle_t new_triangle_from_face(const face_t* f, const mat4_t* projection);
 
 // Getters for named vertices.
-vec2_t triangle_vertex_a();
-vec2_t triangle_vertex_b();
-vec2_t triangle_vertex_c();
+vec2_t triangle_vertex_a(const triangle_t* t);
+vec2_t triangle_vertex_b(const triangle_t* t);
+vec2_t triangle_vertex_c(const triangle_t* t);
+
+// Getters for named texture coordinates.
+tex2_t triangle_tex_a(const triangle_t* t);
+tex2_t triangle_tex_b(const triangle_t* t);
+tex2_t triangle_tex_c(const triangle_t* t);
 
 // Translates and scales the triangle to its final position on-screen.
 void triangle_position_on_screen(triangle_t *t, int window_width, int window_height);

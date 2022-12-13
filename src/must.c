@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "must.h"
 
-FILE* must_fopen(char* path, char* mode) {
+FILE* must_fopen(const char* path, char* mode) {
 	FILE* f = fopen(path, mode);
 	if (f == NULL) {
 		fprintf(stderr, "failed to open %s in mode %s\n", path, mode);

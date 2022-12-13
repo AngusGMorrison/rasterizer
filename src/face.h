@@ -1,3 +1,4 @@
+// face.h provides a structure and functions for working with planes in 3D space.
 #ifndef FACE_H
 #define FACE_H
 
@@ -9,16 +10,37 @@
 #include "texture.h"
 #include "vector.h"
 
+/*
+Structs
+*/
+
+// face_t represents a triangular plane in 3D space.
 typedef struct face_t {
 	vec3_t a, b, c;
 	color_t color;
 } face_t;
 
-face_t new_face_from_mesh_face(mesh_face_t mf);
-void face_transform(face_t* f, mat4_t m);
-bool face_should_cull(face_t f, vec3_t camera_pos);
-vec3_t face_normal(face_t f);
-void face_illuminate(face_t* f, light_t l);
-float face_avg_depth(face_t face);
+
+/*
+Functions
+*/
+
+// Construct a new face from its mesh counterpart.
+face_t new_face_from_mesh_face(const mesh_face_t* mf);
+
+// Transform the face by the given matrix.
+void face_transform(face_t* f, const mat4_t* m);
+
+// Returns true if the face is out of view and should be culled.
+bool face_should_cull(const face_t* f, vec3_t camera_pos);
+
+// Returns the normal to the face.
+vec3_t face_normal(const face_t* f);
+
+// Updates the face's color based on its illumination by the given light sources.
+void face_illuminate(face_t* f, const light_t* l);
+
+// Returns the average of the z-components of the face's vertices.
+float face_avg_depth(const face_t* face);
 
 #endif

@@ -10,26 +10,38 @@ triangle_t new_triangle() {
 	return t;
 }
 
-triangle_t new_triangle_from_face(face_t f, mat4_t projection) {
+triangle_t new_triangle_from_face(const face_t* f, const mat4_t* projection) {
 	triangle_t t = new_triangle();
-	t.fill = f.color;
+	t.fill = f->color;
 	t.avg_depth = face_avg_depth(f);
-	t.vertices[0] = mat4_project_vec3(projection, f.a);
-	t.vertices[1] = mat4_project_vec3(projection, f.b);
-	t.vertices[2] = mat4_project_vec3(projection, f.c);
+	t.vertices[0] = mat4_project_vec3(projection, &f->a);
+	t.vertices[1] = mat4_project_vec3(projection, &f->b);
+	t.vertices[2] = mat4_project_vec3(projection, &f->c);
 	return t;
 }
 
-vec2_t triangle_vertex_a(triangle_t t) {
-	return t.vertices[0];
+vec2_t triangle_vertex_a(const triangle_t* t) {
+	return t->vertices[0];
 }
 
-vec2_t triangle_vertex_b(triangle_t t) {
-	return t.vertices[1];
+vec2_t triangle_vertex_b(const triangle_t* t) {
+	return t->vertices[1];
 }
 
-vec2_t triangle_vertex_c(triangle_t t) {
-	return t.vertices[2];
+vec2_t triangle_vertex_c(const triangle_t* t) {
+	return t->vertices[2];
+}
+
+tex2_t triangle_tex_a(const triangle_t* t) {
+	return t->tex_coords[0];
+}
+
+tex2_t triangle_tex_b(const triangle_t* t) {
+	return t->tex_coords[1];
+}
+
+tex2_t triangle_tex_c(const triangle_t* t) {
+	return t->tex_coords[2];
 }
 
 void triangle_scale_to_screen(triangle_t *t,  int window_width, int window_height) {

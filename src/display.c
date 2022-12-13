@@ -119,14 +119,14 @@ void display_rectangle_draw(const display_rectangle_t* r) {
 	}
 }
 
-display_triangle_t new_display_triangle_from_triangle(triangle_t t) {
+display_triangle_t new_display_triangle_from_triangle(const triangle_t* t) {
 	return (display_triangle_t) {
 		.vertices = {
 			new_display_point_from_vec2(triangle_vertex_a(t)),
 			new_display_point_from_vec2(triangle_vertex_b(t)),
 			new_display_point_from_vec2(triangle_vertex_c(t)),
 		},
-		.fill = t.fill,
+		.fill = t->fill,
 		.border = DEFAULT_BORDER_COLOR,
 	};
 }
@@ -335,7 +335,7 @@ void display_triangle_fill_wireframe(display_triangle_t* t) {
 // 	display_triangle_draw(t, BLACK);
 // }
 
-void render_triangle(triangle_t t) {
+void render_triangle(const triangle_t* t) {
 	display_triangle_t dt = new_display_triangle_from_triangle(t);
 	switch (g_render_mode) {
 	case RENDER_MODE_VERTEX:
