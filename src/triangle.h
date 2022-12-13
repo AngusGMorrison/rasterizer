@@ -9,20 +9,41 @@
 #include "texture.h"
 #include "vector.h"
 
-// triangle_t stores 3 vectors in 2D space that represent the vertices of a projected triangular
+/*
+Structs
+*/
+
+// triangle_t stores three vectors in 2D space that represent the vertices of a projected triangular
 // face.
 typedef struct triangle_t {
-	vec2_t points[3];
+	vec2_t vertices[3];
 	tex2_t tex_coords[3];
-	color_t color;
+	color_t fill;
 	float avg_depth;
 } triangle_t;
 
+/*
+Functions
+*/
+
+// Construct a triangle with all fields initialized to sensible defaults.
 triangle_t new_triangle();
+
+// Construct a triangle by projecting a 3D face into 2D space. Preserves the color of the face and
+// calculates avg_depth from the face's vertices.
 triangle_t new_triangle_from_face(face_t f, mat4_t projection);
+
+// Getters for named vertices.
+vec2_t triangle_vertex_a();
+vec2_t triangle_vertex_b();
+vec2_t triangle_vertex_c();
+
+// Translates and scales the triangle to its final position on-screen.
 void triangle_position_on_screen(triangle_t *t, int window_width, int window_height);
-void triangle_sort_vertices_y(triangle_t* t);
+
+// comparator used for sorting triangles by their average depth.
 bool triangle_less_depth(const void* a, const void* b);
+
 // void triangle_set_tex_coords_from_face(triangle_t* t, mesh_face_t f);
 
 #endif

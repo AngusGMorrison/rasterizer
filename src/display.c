@@ -4,21 +4,21 @@ const int FPS = 60;
 const uint32_t FRAME_TARGET_TIME = 1000 / FPS;
 const int GRID_SPACING_PX = 10;
 const int VERTEX_RECT_WIDTH_PX = 5;
+const float fov_rads = M_PI / 3;
 const light_t g_light = {
 	{.x = -0.5, .y = -0.5, .z = -1}
 };
 
-SDL_Window* window = NULL;
-SDL_Renderer* renderer = NULL;
-color_t* color_buffer = NULL;
-SDL_Texture* color_buffer_texture = NULL;
+SDL_Window* g_window = NULL;
+SDL_Renderer* g_renderer = NULL;
+color_t* g_color_buffer = NULL;
+SDL_Texture* g_color_buffer_texture = NULL;
 int g_window_width = 800;
 int g_window_height = 600;
-vec3_t g_camera_position = { 0, 0, 0 };
-render_mode_t render_mode = RENDER_MODE_SOLID_WIREFRAME;
-bool g_enable_backface_culling = true;
-mat4_t g_projection_matrix;
-float fov_rads = M_PI / 3;
+vec3_t g_camera_position = { 0 };
+render_mode_t g_render_mode = RENDER_MODE_FILL_WIREFRAME;
+bool g_enable_back_face_culling = true;
+mat4_t g_projection_matrix = { 0 };
 
 bool initialize_window(void) {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -31,7 +31,7 @@ bool initialize_window(void) {
 	g_window_width = display_mode.w;
 	g_window_height = display_mode.h;
 
-	window = SDL_CreateWindow(
+	g_window = SDL_CreateWindow(
 		NULL,
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
@@ -39,13 +39,13 @@ bool initialize_window(void) {
 		g_window_height,
 		SDL_WINDOW_FULLSCREEN
 	);
-	if (!window) {
+	if (!g_window) {
 		fprintf(stderr, "Error creating SDL window.\n");
 		return false;
 	}
 
-	renderer = SDL_CreateRenderer(window, -1, 0);
-	if (!renderer) {
+	g_renderer = SDL_CreateRenderer(g_window, -1, 0);
+	if (!g_renderer) {
 		fprintf(stderr, "Error creating SDL renderer.\n");
 		return false;
 	}
@@ -53,88 +53,41 @@ bool initialize_window(void) {
 	return true;
 }
 
-void render_triangle_vertices(triangle_t t) {
-	for (int j = 0; j < 3; j++) {
-		vec2_t point = t.points[j];
-		draw_rectangle(point.x, point.y, VERTEX_RECT_WIDTH_PX, VERTEX_RECT_WIDTH_PX, RED);
+display_point_t new_display_point_from_vec2(vec2_t v) {
+	return (display_point_t) {
+		.x = (int)v.x,
+		.y = (int)v.y,
+	};
+}
+
+// display_point_less_y is a comparator used to sort display points by their y-coordinates.
+bool display_point_less_y(const void* a, const void* b) {
+	display_point_t* dp_a = (display_point_t*)a;
+	display_point_t* dp_b = (display_point_t*)b;
+	return dp_a->y < dp_b->y;
+}
+
+float display_point_inv_gradient(display_point_t a, display_point_t b) {
+	// Guard against zero division errors, which may occur when all three points of a triangle lie
+	// on a line due to float to int truncation.
+	if (a.y == b.y) {
+		return 0;
 	}
+
+	return (b.x - a.x) / (float)(b.y - a.y);
 }
 
-void render_triangle_vertex_wireframe(triangle_t t) {
-	draw_triangle(t, WHITE);
-	render_triangle_vertices(t);
-}
-
-void render_triangle_wireframe(triangle_t t) {
-	draw_triangle(t, GREEN);
-}
-
-void render_triangle_solid(triangle_t t) {
-	fill_triangle(t);
-}
-
-void render_triangle_solid_wireframe(triangle_t t) {
-	render_triangle_solid(t);
-	draw_triangle(t, BLACK);
-}
-
-// void render_triangle_textured(triangle_t t) {
-// 	texture_triangle(t);
-// }
-
-// void render_triangle_textured_wireframe(triangle_t t) {
-// 	texture_triangle(t);
-// 	draw_triangle(t, BLACK);
-// }
-
-triangleRenderFunc triangleRendererForMode() {
-	switch (render_mode) {
-	case RENDER_MODE_VERTEX:
-		return &render_triangle_vertices;
-		break;
-	case RENDER_MODE_WIREFRAME:
-		return &render_triangle_wireframe;
-		break;
-	case RENDER_MODE_VERTEX_WIREFRAME:
-		return &render_triangle_vertex_wireframe;
-		break;
-	case RENDER_MODE_SOLID:
-		return &render_triangle_solid;
-		break;
-	// case RENDER_MODE_TEXTURE:
-	// 	return &render_triangle_textured;
-	// 	break;
-	// case RENDER_MODE_TEXTURE_WIREFRAME:
-	// 	return &render_triangle_textured_wireframe;
-	// 	break;
-	default:
-		return &render_triangle_solid_wireframe;
-	}
-}
-
-// TODO: Convert all draw methods to use vecs and triangles until the last possible moment.
-
-void draw_pixel(int x, int y, color_t color) {
-	if (x < 0 || x >= g_window_width || y < 0 || y >= g_window_height) {
+void draw_pixel(display_point_t p, color_t color) {
+	if (p.x < 0 || p.x >= g_window_width || p.y < 0 || p.y >= g_window_height) {
 		return;
 	}
 
-	color_buffer[g_window_width * y + x] = color;
+	g_color_buffer[g_window_width * p.y + p.x] = color;
 }
 
-void draw_grid(void) {
-	for (int y = 0; y < g_window_height; y++) {
-		for (int x = 0; x < g_window_width; x++) {
-			if (y % GRID_SPACING_PX == 0 || x % GRID_SPACING_PX == 0) {
-				draw_pixel(x, y, BLACK);
-			}
-		}
-	}
-}
-
-void draw_line(int x0, int y0, int x1, int y1, color_t color) {
-	int dx = x1 - x0;
-	int dy = y1 - y0;
+void draw_line(display_point_t a, display_point_t b, color_t color) {
+	int dx = b.x - a.x;
+	int dy = b.y - a.y;
 	int abs_dx = abs(dx);
 	int abs_dy = abs(dy);
 
@@ -145,165 +98,280 @@ void draw_line(int x0, int y0, int x1, int y1, color_t color) {
 	float x_inc = dx / (float)max_side_length;
 	float y_inc = dy / (float)max_side_length;
 
-	float cur_x = x0;
-	float cur_y = y0;
+	float cur_x = a.x;
+	float cur_y = a.y;
 	for (int i = 0; i <= max_side_length; i++) {
-		draw_pixel(round(cur_x), round(cur_y), color);
+		display_point_t pixel = { round(cur_x), round(cur_y) };
+		draw_pixel(pixel, color);
 		cur_x += x_inc;
 		cur_y += y_inc;
 	}
 }
 
-void draw_triangle(triangle_t t, color_t color) {
-	draw_line(t.points[0].x, t.points[0].y, t.points[1].x, t.points[1].y, color);
-	draw_line(t.points[1].x, t.points[1].y, t.points[2].x, t.points[2].y, color);
-	draw_line(t.points[2].x, t.points[2].y, t.points[0].x, t.points[0].y, color);
+void display_rectangle_draw(const display_rectangle_t* r) {
+	for (int i = 0; i < r->w; i++) {
+		int cur_x = r->point.x + i;
+		for (int j = 0; j < r->h; j++) {
+			int cur_y = r->point.y + j;
+			display_point_t pixel = { cur_x, cur_y };
+			draw_pixel(pixel, r->fill);
+		}
+	}
 }
 
-// triangle_horizontal_b_hyp_intercept returns the vec2 at which a horizontal line projected from
-// the triangle's middle vertex (by y-value), b, will intercept the hypoteneuse ac, producing two
-// triangles with a flat bottom and flat top, respectively.
-//
-// t.points must be sorted by y-value.
-vec2_t triangle_horizontal_b_hyp_intercept(const triangle_t* t) {
-	vec2_t a = t->points[0];
-	vec2_t b = t->points[1];
-	vec2_t c = t->points[2];
+display_triangle_t new_display_triangle_from_triangle(triangle_t t) {
+	return (display_triangle_t) {
+		.vertices = {
+			new_display_point_from_vec2(triangle_vertex_a(t)),
+			new_display_point_from_vec2(triangle_vertex_b(t)),
+			new_display_point_from_vec2(triangle_vertex_c(t)),
+		},
+		.fill = t.fill,
+		.border = DEFAULT_BORDER_COLOR,
+	};
+}
 
-	vec2_t v = {
+display_point_t display_triangle_vertex_a(const display_triangle_t* t) {
+	return t->vertices[0];
+};
+
+display_point_t display_triangle_vertex_b(const display_triangle_t* t) {
+	return t->vertices[1];
+}
+
+display_point_t display_triangle_vertex_c(const display_triangle_t* t) {
+	return t->vertices[2];
+}
+
+// display_triangle_sort_vertices_y sorts the display_triangle's vertices by their y-components.
+void display_triangle_sort_vertices_y(display_triangle_t* t) {
+	insertion_sort(t->vertices, 3, sizeof(display_point_t), &display_point_less_y);
+}
+
+void display_triangle_draw(const display_triangle_t* t) {
+	draw_line(display_triangle_vertex_a(t), display_triangle_vertex_b(t), t->border);
+	draw_line(display_triangle_vertex_b(t), display_triangle_vertex_c(t), t->border);
+	draw_line(display_triangle_vertex_c(t), display_triangle_vertex_a(t), t->border);
+}
+
+void display_triangle_render_vertices(const display_triangle_t* t) {
+	for (int j = 0; j < 3; j++) {
+		display_rectangle_t r = {
+			.point = t->vertices[j],
+			.w = VERTEX_RECT_WIDTH_PX,
+			.h = VERTEX_RECT_WIDTH_PX,
+			.fill = RED,
+			.border = 0,
+		};
+		display_rectangle_draw(&r);
+	}
+}
+
+void display_triangle_render_wireframe(display_triangle_t* t) {
+	t->border = GREEN;
+	display_triangle_draw(t);
+}
+
+void display_triangle_render_vertex_wireframe(display_triangle_t* t) {
+	display_triangle_render_wireframe(t);
+	display_triangle_render_vertices(t);
+}
+
+/*
+display_triangle_b_hyp_intercept returns the display_point at which a horizontal line projected from
+the triangle's middle vertex (by y-value), b, will intercept the hypotenuse, ac, producing two
+triangles with a flat bottom and flat top, respectively. The input triangle's vertices must be
+sorted by y-value.
+
+                /|
+               / |
+              /  |
+             ----|  <- intercept
+             \ . |
+              -\ |
+                -\
+*/
+display_point_t display_triangle_b_hyp_intercept(const display_triangle_t* t) {
+	display_point_t a = display_triangle_vertex_a(t);
+	display_point_t b = display_triangle_vertex_b(t);
+	display_point_t c = display_triangle_vertex_c(t);
+	display_point_t intercept = {
 		.x = ((c.x - a.x) * (b.y - a.y)) / (c.y - a.y) + a.x,
 		.y = b.y,
 	};
 
-	return v;
+	return intercept;
 }
 
 /*
-fill_flat_bottom_triangle renders a filled, flat-bottomed triangle by scanning from top to bottom
-and calculating the difference in the x positions of the opposing slopes.
+display_triangle_fill_flat_bottom renders a filled, flat-bottomed triangle by scanning from top to
+bottom and calculating the difference in the x positions of the opposing slopes.
 
-			 0
-			/ \
-		l  /   \  r
-		  /_____\
-		 1       2
+             a
+            / \
+        l  /   \  r
+          /_____\
+         b       c
 */
-void fill_flat_bottom_triangle(const triangle_t* t) {
+void display_triangle_fill_flat_bottom(const display_triangle_t* t) {
 	// Calculate the change in x with respect to y (inverse gradient) for both sloped sides of the
 	// flat-bottomed triangle. We know that y (representing the current scan line) will increase
 	// monotonically – the change in x is our unknown.
-	float inv_m_left = vec2_inv_gradient(t->points[0], t->points[1]);
-	float inv_m_right = vec2_inv_gradient(t->points[2], t->points[0]);
-	float x_start = t->points[0].x;
+	display_point_t a = display_triangle_vertex_a(t);
+	display_point_t b = display_triangle_vertex_b(t);
+	display_point_t c = display_triangle_vertex_c(t);
+	float inv_m_left = display_point_inv_gradient(a, b);
+	float inv_m_right = display_point_inv_gradient(c, a);
+	float x_start = a.x;
 	float x_end = x_start;
-
+	int max_width = abs(c.x - b.x);
 
 	// Fill the triangle from top to bottom.
-	float max_width = fabsf(t->points[2].x - t->points[1].x);
-	for (int y = t->points[0].y; y <= (int)t->points[2].y; y++) {
-		draw_line(x_start, y, x_end, y, t->color);
+	for (int y = a.y; y <= c.y; y++) {
+		draw_line(
+			(display_point_t){(int)x_start, y},
+			(display_point_t){(int)x_end, y},
+			t->fill
+		);
 
 		x_start += inv_m_left;
 		x_end += inv_m_right;
 		// Prevent x_start from escaping the bounds of the triangle when inv_m is large.
 		if (fabsf(x_end - x_start) > max_width) {
-			x_start = t->points[1].x;
-			x_end = t->points[2].x;
+			x_start = b.x;
+			x_end = c.x;
 		}
 	}
 }
 
 /*
-fill_flat_top_triangle renders a filled, flat-topped triangle by scanning from bottom to top
+display_triangle_fill_flat_top renders a filled, flat-topped triangle by scanning from bottom to top
 and calculating the difference in the x positions of the opposing slopes.
 
-		 0 _____ 1
+		 a _____ b
 		  \     /
 		l  \   /  r
 			\ /
-			 2
+			 c
 */
-void fill_flat_top_triangle(const triangle_t* t) {
+void display_triangle_fill_flat_top(const display_triangle_t* t) {
 	// Calculate the change in x with respect to y (inverse gradient) for both sloped sides of the
 	// flat-topped triangle. We know that y (representing the current scan line) will decrease
 	// monotonically – the change in x is our unknown.
-	float inv_m_left = vec2_inv_gradient(t->points[2], t->points[0]);
-	float inv_m_right = vec2_inv_gradient(t->points[1], t->points[2]);
-	float x_start = t->points[2].x;
+	display_point_t a = display_triangle_vertex_a(t);
+	display_point_t b = display_triangle_vertex_b(t);
+	display_point_t c = display_triangle_vertex_c(t);
+	float inv_m_left = display_point_inv_gradient(c, a);
+	float inv_m_right = display_point_inv_gradient(b, c);
+	float x_start = c.x;
 	float x_end = x_start;
+	int max_width = abs(b.x - a.x);
 
 	// Fill the triangle from bottom to top. This loop draws one line fewer than
 	// fill_flat_bottom_triangle to avoid double-rendering the join between top and bottom.
-	float max_width = fabsf(t->points[1].x - t->points[0].x);
-	for (int y = t->points[2].y; y > (int)t->points[0].y; y--) {
-		draw_line(x_start, y, x_end, y, t->color);
+	for (int y = t->vertices[2].y; y > (int)t->vertices[0].y; y--) {
+		draw_line(
+			(display_point_t){(int)x_start, y},
+			(display_point_t){(int)x_end, y},
+			t->fill
+		);
 
 		// We're moving "against" the gradient, so subtract m on each iteration.
 		x_start -= inv_m_left;
 		x_end -= inv_m_right;
 		// Prevent x_start from escaping the bounds of the triangle when inv_m is large.
 		if (fabsf(x_end - x_start) > max_width) {
-			x_start = t->points[0].x;
-			x_end = t->points[1].x;
+			x_start = a.x;
+			x_end = b.x;
 		}
 	}
 }
 
-// TODO: Pass by pointer
-void fill_triangle(triangle_t t) {
-	triangle_sort_vertices_y(&t);
-	vec2_t a = t.points[0];
-	vec2_t b = t.points[1];
-	vec2_t c = t.points[2];
+void display_triangle_fill(display_triangle_t* t) {
+	display_triangle_sort_vertices_y(t);
+	display_point_t a = display_triangle_vertex_a(t);
+	display_point_t b = display_triangle_vertex_b(t);
+	display_point_t c = display_triangle_vertex_c(t);
 
 	// If the input triangle is already flat-topped or flat-bottomed, perform only the required
 	// operation. Otherwise, attempting to fill the zero-height opposite half will cause a zero
 	// division error.
-	if (float_approx_equal(a.y, b.y)) {
-		fill_flat_top_triangle(&t);
+	if (a.y == b.y) {
+		display_triangle_fill_flat_top(t);
 		return;
 	}
-	if (float_approx_equal(b.y, c.y)) {
-		fill_flat_bottom_triangle(&t);
+	if (b.y == c.y) {
+		display_triangle_fill_flat_bottom(t);
 		return;
 	}
 
 	// Calculate the point at the intercept of the horizontal line originating at b with ac, using
 	// triangle similarity.
-	vec2_t m = triangle_horizontal_b_hyp_intercept(&t);
-	triangle_t flat_bottom = {
-		.points = {a, b, m},
-		.color = t.color
+	display_point_t m = display_triangle_b_hyp_intercept(t);
+	display_triangle_t flat_bottom = {
+		.vertices = {a, b, m},
+		.fill = t->fill
 	};
-	triangle_t flat_top = {
-		.points = {b, m, c},
-		.color = t.color
+	display_triangle_t flat_top = {
+		.vertices = {b, m, c},
+		.fill = t->fill
 	};
 
-	fill_flat_bottom_triangle(&flat_bottom);
-	fill_flat_top_triangle(&flat_top);
+	display_triangle_fill_flat_bottom(&flat_bottom);
+	display_triangle_fill_flat_top(&flat_top);
 }
 
-void draw_rectangle(int x, int y, int w, int h, color_t color) {
-	for (int i = 0; i < w; i++) {
-		int currentX = x + i;
-		for (int j = 0; j < h; j++) {
-			int currentY = y + j;
-			draw_pixel(currentX, currentY, color);
-		}
+void display_triangle_fill_wireframe(display_triangle_t* t) {
+	display_triangle_fill(t);
+	display_triangle_draw(t);
+}
+
+// void render_triangle_textured(triangle_t t) {
+// 	texture_triangle(t);
+// }
+
+// void render_triangle_textured_wireframe(triangle_t t) {
+// 	texture_triangle(t);
+// 	display_triangle_draw(t, BLACK);
+// }
+
+void render_triangle(triangle_t t) {
+	display_triangle_t dt = new_display_triangle_from_triangle(t);
+	switch (g_render_mode) {
+	case RENDER_MODE_VERTEX:
+		display_triangle_render_vertices(&dt);
+		break;
+	case RENDER_MODE_WIREFRAME:
+		display_triangle_render_wireframe(&dt);
+		break;
+	case RENDER_MODE_VERTEX_WIREFRAME:
+		display_triangle_render_vertex_wireframe(&dt);
+		break;
+	case RENDER_MODE_FILL:
+		display_triangle_fill(&dt);
+		break;
+	// case RENDER_MODE_TEXTURE:
+	// 	return &render_triangle_textured;
+	// 	break;
+	// case RENDER_MODE_TEXTURE_WIREFRAME:
+	// 	return &render_triangle_textured_wireframe;
+	// 	break;
+	default:
+		display_triangle_fill_wireframe(&dt);
 	}
 }
 
+// render_color_buffer copies the contents to the global color buffer to the SDL texture.
 void render_color_buffer(void) {
 	SDL_UpdateTexture(
-		color_buffer_texture,
+		g_color_buffer_texture,
 		NULL,
-		color_buffer,
+		g_color_buffer,
 		(g_window_width * sizeof(color_t))
 	);
 	SDL_RenderCopy(
-		renderer,
-		color_buffer_texture,
+		g_renderer,
+		g_color_buffer_texture,
 		NULL,
 		NULL
 	);
@@ -312,12 +380,12 @@ void render_color_buffer(void) {
 void clear_color_buffer(color_t color) {
 	int pixels = g_window_height * g_window_width;
 	for (int i = 0; i < pixels; i++) {
-		color_buffer[i] = color;
+		g_color_buffer[i] = color;
 	}
 }
 
 void destroy_window(void) {
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(g_renderer);
+	SDL_DestroyWindow(g_window);
 	SDL_Quit();
 }

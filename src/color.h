@@ -11,10 +11,14 @@ typedef uint32_t color_t;
 #define GREEN 0xFF00FF00
 #define MAGENTA 0xFFFF00FF
 #define MAX_ALPHA 0xFF000000
-#define SILVER 0xFFC0C0C0
 #define RED 0xFFFF0000
+#define SILVER 0xFFC0C0C0
 #define WHITE 0xFFFFFFFF
 #define YELLOW 0xFFFFFF00
+
+extern const color_t DEFAULT_BORDER_COLOR;
+extern const color_t DEFAULT_FILL_COLOR;
+extern const color_t DEFAULT_WIREFRAME_COLOR;
 
 color_t color_adjust_intensity(color_t original, float intensity);
 

@@ -17,9 +17,9 @@ Uint64 prev_frame_time = 0;
 triangle_t* triangles_to_render = NULL; // dynamic array of triangles to render
 
 int setup(void) {
-	color_buffer = must_malloc(sizeof(color_t) * g_window_width * g_window_height);
-	color_buffer_texture = SDL_CreateTexture(
-		renderer,
+	g_color_buffer = must_malloc(sizeof(color_t) * g_window_width * g_window_height);
+	g_color_buffer_texture = SDL_CreateTexture(
+		g_renderer,
 		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STREAMING,
 		g_window_width,
@@ -35,28 +35,28 @@ void process_keydown(SDL_KeyCode key) {
 		is_running = false;
 		break;
 	case SDLK_1:
-		render_mode = RENDER_MODE_VERTEX;
+		g_render_mode = RENDER_MODE_VERTEX;
 		break;
 	case SDLK_2:
-		render_mode = RENDER_MODE_VERTEX_WIREFRAME;
+		g_render_mode = RENDER_MODE_VERTEX_WIREFRAME;
 		break;
 	case SDLK_3:
-		render_mode = RENDER_MODE_WIREFRAME;
+		g_render_mode = RENDER_MODE_WIREFRAME;
 		break;
 	case SDLK_4:
-		render_mode = RENDER_MODE_SOLID;
+		g_render_mode = RENDER_MODE_FILL;
 		break;
 	case SDLK_5:
-		render_mode = RENDER_MODE_SOLID_WIREFRAME;
+		g_render_mode = RENDER_MODE_FILL_WIREFRAME;
 		break;
 	// case SDLK_6:
-	// 	render_mode = RENDER_MODE_TEXTURE;
+	// 	g_render_mode = RENDER_MODE_TEXTURE;
 	// 	break;
 	// case SDLK_7:
-	// 	render_mode = RENDER_MODE_TEXTURE_WIREFRAME;
+	// 	g_render_mode = RENDER_MODE_TEXTURE_WIREFRAME;
 	// 	break;
 	case SDLK_c:
-		g_enable_backface_culling = !g_enable_backface_culling;
+		g_enable_back_face_culling = !g_enable_back_face_culling;
 		break;
 	default:
 		// Do nothing.
@@ -106,7 +106,7 @@ void update(void) {
 	for (int i = 0; i < n_mesh_faces; i++) {
 		face_t face = new_face_from_mesh_face(mesh.faces[i]);
 		face_transform(&face, world_matrix);
-		if (g_enable_backface_culling && face_should_cull(face, g_camera_position)) {
+		if (g_enable_back_face_culling && face_should_cull(face, g_camera_position)) {
 			continue;
 		}
 
@@ -119,40 +119,27 @@ void update(void) {
 	}
 }
 
+void render_triangles_to_color_buffer(void) {
+	int len = array_len(triangles_to_render);
+	quick_sort(triangles_to_render, len, sizeof(triangle_t), triangle_less_depth);
+	for (int i = len - 1; i >= 0; i--) {
+		render_triangle(triangles_to_render[i]);
+	}
+}
+
 // Render triangles using the painter's algorithm, starting with the deepest triangles and painting
 // over them with shallower ones.
 void render(void) {
-	quick_sort(
-		triangles_to_render,
-		array_len(triangles_to_render),
-		sizeof(triangle_t),
-		triangle_less_depth
-	);
-	triangleRenderFunc renderTriangle = triangleRendererForMode();
-	int len = array_len(triangles_to_render);
-	for (int i = len - 1; i >= 0; i--) {
-		triangle_t t = triangles_to_render[i];
-		// display_triangle_t dt = {
-		// 	.ax = t.points[0].x, .ay = t.points[0].y,
-		// 	.bx = t.points[1].x, .by = t.points[1].y,
-		// 	.cx = t.points[2].x, .cy = t.points[2].y,
-		// 	.au = t.tex_coords[0].x, .av = t.tex_coords[0].y,
-		// 	.bu = t.tex_coords[1].x, .bv = t.tex_coords[1].y,
-		// 	.cu = t.tex_coords[2].x, .cv = t.tex_coords[2].y,
-		// }
-		renderTriangle(t);
-	}
-
+	render_triangles_to_color_buffer();
 	render_color_buffer();
 	clear_color_buffer(BLACK);
-
-	SDL_RenderPresent(renderer);
+	SDL_RenderPresent(g_renderer);
 }
 
 void free_resources(void) {
 	array_free(mesh.faces);
 	array_free(mesh.vertices);
-	free(color_buffer);
+	free(g_color_buffer);
 }
 
 int main(void) {

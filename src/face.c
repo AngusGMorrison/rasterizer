@@ -28,7 +28,7 @@ bool face_should_cull(face_t f, vec3_t camera_pos) {
 	vec3_t n = face_normal(f);
 	vec3_t acam = vec3_sub(camera_pos, f.a);
 
-	if (vec3_dot(n, acam) <= 0) {
+	if (vec3_dot(n, acam) < 0) {
 		return true;
 	}
 	return false;

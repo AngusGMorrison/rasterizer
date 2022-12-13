@@ -1,5 +1,9 @@
 #include "color.h"
 
+const color_t DEFAULT_BORDER_COLOR = BLACK;
+const color_t DEFAULT_FILL_COLOR = WHITE;
+const color_t DEFAULT_WIREFRAME_COLOR = GREEN;
+
 color_t color_adjust_intensity(color_t original, float intensity) {
 	color_t a = original & MAX_ALPHA;
 	color_t r = (original & 0x00FF0000) * intensity;

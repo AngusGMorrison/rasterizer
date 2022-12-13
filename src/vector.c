@@ -13,10 +13,6 @@ float vec2_gradient(vec2_t a, vec2_t b) {
 	return (b.y - a.y) / (b.x - a.x);
 }
 
-float vec2_inv_gradient(vec2_t a, vec2_t b) {
-	return (b.x - a.x) / (b.y - a.y);
-}
-
 vec2_t vec2_add(vec2_t a, vec2_t b) {
 	a.x += b.x;
 	a.y += b.y;

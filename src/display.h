@@ -1,3 +1,5 @@
+// display.h provides constants, global variables, types and functions for initializing and
+// rendering the scene.
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
@@ -13,52 +15,111 @@
 #include "vector.h"
 #include "triangle.h"
 
+/*
+Constants, global variables and enums
+*/
+
+// Target framerate.
 extern const int FPS;
+
+// Target time in which to render a single frame.
 extern const uint32_t FRAME_TARGET_TIME;
-extern const int GRID_SPACING_PX;
+
+// Dimensions of the rendered vertex.
 extern const int VERTEX_RECT_WIDTH_PX;
+
+// Global light source.
 extern const light_t g_light;
 
-typedef void(*triangleRenderFunc) (triangle_t t);
+// Vertical field of view in radians.
+extern const float fov_rads;
 
 typedef enum render_mode_t {
 	RENDER_MODE_VERTEX,
 	RENDER_MODE_WIREFRAME,
 	RENDER_MODE_VERTEX_WIREFRAME,
-	RENDER_MODE_SOLID,
-	RENDER_MODE_SOLID_WIREFRAME,
+	RENDER_MODE_FILL,
+	RENDER_MODE_FILL_WIREFRAME,
 	RENDER_MODE_TEXTURE,
 	RENDER_MODE_TEXTURE_WIREFRAME,
 } render_mode_t;
-extern render_mode_t render_mode;
 
-typedef struct display_triangle_t {
-	int ax, ay, bx, by, cx, cy;
-	int au, av, bu, bv, cu, cv;
-} display_triangle_t;
+// Global render mode.
+extern render_mode_t g_render_mode;
 
-extern SDL_Window* window;
-extern SDL_Renderer* renderer;
-extern color_t* color_buffer;
-extern SDL_Texture* color_buffer_texture;
+// The SDL rendering window.
+extern SDL_Window* g_window;
+
+// The SDL renderer.
+extern SDL_Renderer* g_renderer;
+
+// Buffer to which all updates are written before being copied to the SDL_Texture.
+extern color_t* g_color_buffer;
+
+// The buffer used by the renderer to update the screen.
+extern SDL_Texture* g_color_buffer_texture;
+
+// Screen width.
 extern int g_window_width;
+
+// Screen height.
 extern int g_window_height;
-extern bool g_enable_backface_culling;
+
+// Toggle back-face culling.
+extern bool g_enable_back_face_culling;
+
+// Global matrix to project the 3D scene onto the 2D screen.
 extern mat4_t g_projection_matrix;
-extern float fov_rads;
+
+// Position of the camera.
 extern vec3_t g_camera_position;
 
+
+/*
+Structs
+*/
+
+// display_point_t is a 2D integer vector whose x and y component correspond directly to pixels on
+// the screen.
+typedef struct display_point_t {
+	int x, y;
+} display_point_t;
+
+// display_triangle_t encapsulates the data required to render a triangle to the screen. It differs
+// from triangle_t in that its vertices are integer points corresponding to pixels on-screen.
+typedef struct display_triangle_t {
+	display_point_t vertices[3];
+	color_t fill;
+	color_t border;
+	// int au, av, bu, bv, cu, cv;
+} display_triangle_t;
+
+// display_rectangle_t encapsulates the data required to render a rectangle to the screen.
+typedef struct display_rectangle_t {
+	display_point_t point;
+	int w, h;
+	color_t fill;
+	color_t border;
+} display_rectangle_t;
+
+
+/*
+Functions
+*/
+
+// Initialize the global SDL window.
 bool initialize_window(void);
-triangleRenderFunc triangleRendererForMode();
-void draw_pixel(int x, int y, color_t color);
-void draw_grid(void);
-void draw_line(int x0, int y0, int x1, int y1, color_t color);
-void draw_triangle(triangle_t t, color_t color);
-void fill_triangle(triangle_t t);
-// void texture_triangle(display_triangle_t t);
-void draw_rectangle(int x, int y, int w, int h, color_t color);
+
+// Render a triangle to the global color buffer according to the current render mode.
+void render_triangle(triangle_t t);
+
+// Render the color buffer to the global SDL texture.
 void render_color_buffer(void);
+
+// Clear the color buffer with the specified color.
 void clear_color_buffer(color_t color);
+
+// Free all resources associated with the SDL window.
 void destroy_window(void);
 
 #endif
