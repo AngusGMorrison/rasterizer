@@ -16,6 +16,6 @@ typedef uint32_t color_t;
 #define WHITE 0xFFFFFFFF
 #define YELLOW 0xFFFFFF00
 
-color_t color_illuminate(color_t original, float intensity);
+color_t color_adjust_intensity(color_t original, float intensity);
 
 #endif

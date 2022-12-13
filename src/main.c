@@ -6,10 +6,8 @@
 
 #include "array.h"
 #include "display.h"
-#include "matrix.h"
 #include "mesh.h"
 #include "must.h"
-#include "obj_parser.h"
 #include "vector.h"
 
 
@@ -19,15 +17,15 @@ Uint64 prev_frame_time = 0;
 triangle_t* triangles_to_render = NULL; // dynamic array of triangles to render
 
 int setup(void) {
-	color_buffer = must_malloc(sizeof(color_t) * window_width * window_height);
+	color_buffer = must_malloc(sizeof(color_t) * g_window_width * g_window_height);
 	color_buffer_texture = SDL_CreateTexture(
 		renderer,
 		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STREAMING,
-		window_width,
-		window_height
+		g_window_width,
+		g_window_height
 	);
-	projection_matrix = mat4_make_perspective(fov_rads, window_height / (float)window_width, 0.1, 100.0);
+	g_projection_matrix = mat4_make_perspective(fov_rads, g_window_height / (float)g_window_width, 0.1, 100.0);
 	return load_mesh("assets/f22.obj");
 }
 
@@ -51,8 +49,14 @@ void process_keydown(SDL_KeyCode key) {
 	case SDLK_5:
 		render_mode = RENDER_MODE_SOLID_WIREFRAME;
 		break;
+	// case SDLK_6:
+	// 	render_mode = RENDER_MODE_TEXTURE;
+	// 	break;
+	// case SDLK_7:
+	// 	render_mode = RENDER_MODE_TEXTURE_WIREFRAME;
+	// 	break;
 	case SDLK_c:
-		enable_backface_culling = !enable_backface_culling;
+		g_enable_backface_culling = !g_enable_backface_culling;
 		break;
 	default:
 		// Do nothing.
@@ -83,8 +87,8 @@ void await_frame(void) {
 
 void update_mesh(void) {
 	mesh.rotation.x += 0.05;
-	mesh.rotation.y += 0.05;
-	mesh.rotation.z += 0.05;
+	// mesh.rotation.y += 0.05;
+	// mesh.rotation.z += 0.05;
 	// mesh.scale.x += 0.002;
 	// mesh.scale.y += 0.001;
 	// mesh.translation.x += 0.01;
@@ -98,42 +102,18 @@ void update(void) {
 	update_mesh();
 	mat4_t world_matrix = mesh_to_world_matrix(&mesh);
 
-	vec3_t vertices[3];
-	int faces = array_len(mesh.faces);
-	for (int i = 0; i < faces; i++) {
-		face_t face = mesh.faces[i];
-		vertices[0] = mesh.vertices[face.a - 1];
-		vertices[1] = mesh.vertices[face.b - 1];
-		vertices[2] = mesh.vertices[face.c - 1];
-
-		for (int j = 0; j < 3; j++) {
-			vec4_t conformable = vec4_from_vec3(vertices[j]);
-			vec4_t transformed = mat4_mul_vec4(world_matrix, conformable);
-			vertices[j] = vec3_from_vec4(transformed);
-		}
-
-		if (shouldCull(vertices)) {
+	int n_mesh_faces = array_len(mesh.faces);
+	for (int i = 0; i < n_mesh_faces; i++) {
+		face_t face = new_face_from_mesh_face(mesh.faces[i]);
+		face_transform(&face, world_matrix);
+		if (g_enable_backface_culling && face_should_cull(face, g_camera_position)) {
 			continue;
 		}
 
-		triangle_t triangle = {
-			.color = face_illuminate(vertices, g_light, face.color)
-		};
-		float total_depth = 0.0;
-		for (int j = 0; j < 3; j++) {
-			// Project into the canonical view (1x1x1 box - Normalized Device Coordinates).
-			vec3_t projected = mat4_project_vec3(projection_matrix, vertices[j]);
-			// Scale to screen size.
-			projected.x *= window_width / 2.0;
-			projected.y *= window_height / 2.0;
-			// Translate to centre of screen.
-			projected.x += window_width / 2.0;
-			projected.y += window_height / 2.0;
-			// Save output.
-			triangle.points[j] = vec2_from_vec3(projected);
-			total_depth += vertices[j].z;
-		}
-		triangle.avg_depth = total_depth / 3.0;
+		face_illuminate(&face, g_light);
+		triangle_t triangle = new_triangle_from_face(face, g_projection_matrix);
+		triangle_position_on_screen(&triangle, g_window_width, g_window_height);
+		// triangle_set_tex_coords_from_face(&triangle, mesh_face);
 
 		array_push(triangles_to_render, triangle);
 	}
@@ -151,7 +131,16 @@ void render(void) {
 	triangleRenderFunc renderTriangle = triangleRendererForMode();
 	int len = array_len(triangles_to_render);
 	for (int i = len - 1; i >= 0; i--) {
-		renderTriangle(triangles_to_render[i]);
+		triangle_t t = triangles_to_render[i];
+		// display_triangle_t dt = {
+		// 	.ax = t.points[0].x, .ay = t.points[0].y,
+		// 	.bx = t.points[1].x, .by = t.points[1].y,
+		// 	.cx = t.points[2].x, .cy = t.points[2].y,
+		// 	.au = t.tex_coords[0].x, .av = t.tex_coords[0].y,
+		// 	.bu = t.tex_coords[1].x, .bv = t.tex_coords[1].y,
+		// 	.cu = t.tex_coords[2].x, .cv = t.tex_coords[2].y,
+		// }
+		renderTriangle(t);
 	}
 
 	render_color_buffer();

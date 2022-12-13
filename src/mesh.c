@@ -19,26 +19,93 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
 	{.x = -1, .y = -1, .z = 1 } // 8
 };
 
-face_t cube_faces[N_CUBE_FACES] = {
+mesh_face_t cube_faces[N_CUBE_FACES] = {
 	// front
-	{.a = 1, .b = 2, .c = 3, .color = RED },
-	{.a = 1, .b = 3, .c = 4, .color = RED },
+	{.a = 1, .b = 2, .c = 3, .a_uv = { 0, 0 }, .b_uv = { 0, 1 }, .c_uv = { 1, 1 }, .color = RED },
+	{.a = 1, .b = 3, .c = 4, .a_uv = { 0, 0 }, .b_uv = { 1, 1 }, .c_uv = { 1, 0 }, .color = RED },
 	// right
-	{.a = 4, .b = 3, .c = 5, .color = GREEN },
-	{.a = 4, .b = 5, .c = 6, .color = GREEN },
+	{.a = 4, .b = 3, .c = 5, .a_uv = { 0, 0 }, .b_uv = { 0, 1 }, .c_uv = { 1, 1 }, .color = GREEN },
+	{.a = 4, .b = 5, .c = 6, .a_uv = { 0, 0 }, .b_uv = { 1, 1 }, .c_uv = { 1, 0 }, .color = GREEN },
 	// back
-	{.a = 6, .b = 5, .c = 7, .color = BLUE },
-	{.a = 6, .b = 7, .c = 8, .color = BLUE },
+	{.a = 6, .b = 5, .c = 7, .a_uv = { 0, 0 }, .b_uv = { 0, 1 }, .c_uv = { 1, 1 }, .color = BLUE },
+	{.a = 6, .b = 7, .c = 8, .a_uv = { 0, 0 }, .b_uv = { 1, 1 }, .c_uv = { 1, 0 }, .color = BLUE },
 	// left
-	{.a = 8, .b = 7, .c = 2, .color = YELLOW },
-	{.a = 8, .b = 2, .c = 1, .color = YELLOW },
+	{.a = 8, .b = 7, .c = 2, .a_uv = { 0, 0 }, .b_uv = { 0, 1 }, .c_uv = { 1, 1 }, .color = YELLOW },
+	{.a = 8, .b = 2, .c = 1, .a_uv = { 0, 0 }, .b_uv = { 1, 1 }, .c_uv = { 1, 0 }, .color = YELLOW },
 	// top
-	{.a = 2, .b = 7, .c = 5, .color = MAGENTA },
-	{.a = 2, .b = 5, .c = 3, .color = MAGENTA },
+	{.a = 2, .b = 7, .c = 5, .a_uv = { 0, 0 }, .b_uv = { 0, 1 }, .c_uv = { 1, 1 }, .color = MAGENTA },
+	{.a = 2, .b = 5, .c = 3, .a_uv = { 0, 0 }, .b_uv = { 1, 1 }, .c_uv = { 1, 0 }, .color = MAGENTA },
 	// bottom
-	{.a = 6, .b = 8, .c = 1, .color = CYAN },
-	{.a = 6, .b = 1, .c = 4, .color = CYAN },
+	{.a = 6, .b = 8, .c = 1, .a_uv = { 0, 0 }, .b_uv = { 0, 1 }, .c_uv = { 1, 1 }, .color = CYAN },
+	{.a = 6, .b = 1, .c = 4, .a_uv = { 0, 0 }, .b_uv = { 1, 1 }, .c_uv = { 1, 0 }, .color = CYAN },
 };
+
+const int MAX_LINE = 512;
+
+int parse_vertex(char* line, mesh_t* dst) {
+	vec3_t v;
+	int filled = sscanf(line, "v %f %f %f", &v.x, &v.y, &v.z);
+	if (filled < 3) {
+		fprintf(stderr, "failed to parse vertex for line \"%s\"\n", line);
+		return -1;
+	}
+
+	array_push(dst->vertices, v);
+	return 0;
+}
+
+// parse_face parses a single face from an obj file.
+int parse_face(char* line, mesh_t* dst) {
+	mesh_face_t face = new_mesh_face(dst->vertices);
+	mesh_face_t texture;
+	mesh_face_t normal;
+	int filled = sscanf(
+		line,
+		"f %d/%d/%d %d/%d/%d %d/%d/%d",
+		&face.a, &texture.a, &normal.a,
+		&face.b, &texture.b, &normal.b,
+		&face.c, &texture.c, &normal.c
+	);
+	if (filled < 9) {
+		fprintf(stderr, "failed to parse face for line \"%s\"\n", line);
+		return -1;
+	}
+
+	array_push(dst->faces, face);
+	return 0;
+}
+
+int parse_line(char* line, mesh_t* dst) {
+	int err = 0;
+	if (strncmp(line, "v ", 2) == 0) {
+		err = parse_vertex(line, dst);
+	}
+	else if (strncmp(line, "f ", 2) == 0) {
+		err = parse_face(line, dst);
+	}
+
+	return err;
+}
+
+// parse_obj_file takes the path of the obj file and the dynamic arrays vert_out and face_out to
+// write vertex and face data to, respectively.
+int parse_obj_file(char* path, mesh_t* dst) {
+	FILE* obj = must_fopen(path, "r");
+	char line[MAX_LINE];
+	while (fgets(line, MAX_LINE, obj) != NULL) {
+		int err = parse_line(line, dst);
+		if (err) {
+			return -1;
+		}
+	}
+	if (!feof(obj)) {
+		fprintf(stderr, "failed to read to end of %s\n", path);
+		return -1;
+	}
+	fclose(obj);
+
+	return 0;
+}
 
 void load_cube() {
 	for (int i = 0; i < N_CUBE_VERTICES; i++) {
@@ -65,4 +132,23 @@ mat4_t mesh_to_world_matrix(mesh_t* mesh) {
 	world_matrix = mat4_mul(rotation_matrix_y, world_matrix);
 	world_matrix = mat4_mul(rotation_matrix_x, world_matrix);
 	return mat4_mul(translation_matrix, world_matrix);
+}
+
+mesh_face_t new_mesh_face(vec3_t* mesh_vertices) {
+	return (mesh_face_t){
+		.mesh_vertices = mesh_vertices,
+		.color = WHITE
+	};
+}
+
+vec3_t mesh_face_vertex_a(mesh_face_t mf) {
+	return mf.mesh_vertices[mf.a - 1];
+}
+
+vec3_t mesh_face_vertex_b(mesh_face_t mf) {
+	return mf.mesh_vertices[mf.b - 1];
+}
+
+vec3_t mesh_face_vertex_c(mesh_face_t mf) {
+	return mf.mesh_vertices[mf.c - 1];
 }

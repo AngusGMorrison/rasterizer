@@ -4,5 +4,7 @@ build:
 run:
 	./rasterizer
 
+brun: build run
+
 clean:
 	rm rasterizer

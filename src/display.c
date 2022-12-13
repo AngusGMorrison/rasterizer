@@ -5,19 +5,19 @@ const uint32_t FRAME_TARGET_TIME = 1000 / FPS;
 const int GRID_SPACING_PX = 10;
 const int VERTEX_RECT_WIDTH_PX = 5;
 const light_t g_light = {
-	{.x = 1, .y = -1, .z = 1}
+	{.x = -0.5, .y = -0.5, .z = -1}
 };
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 color_t* color_buffer = NULL;
 SDL_Texture* color_buffer_texture = NULL;
-int window_width = 800;
-int window_height = 600;
-vec3_t camera_position = { 0, 0, 0 };
+int g_window_width = 800;
+int g_window_height = 600;
+vec3_t g_camera_position = { 0, 0, 0 };
 render_mode_t render_mode = RENDER_MODE_SOLID_WIREFRAME;
-bool enable_backface_culling = true;
-mat4_t projection_matrix;
+bool g_enable_backface_culling = true;
+mat4_t g_projection_matrix;
 float fov_rads = M_PI / 3;
 
 bool initialize_window(void) {
@@ -28,15 +28,15 @@ bool initialize_window(void) {
 
 	SDL_DisplayMode display_mode;
 	SDL_GetCurrentDisplayMode(0, &display_mode);
-	window_width = display_mode.w;
-	window_height = display_mode.h;
+	g_window_width = display_mode.w;
+	g_window_height = display_mode.h;
 
 	window = SDL_CreateWindow(
 		NULL,
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		window_width,
-		window_height,
+		g_window_width,
+		g_window_height,
 		SDL_WINDOW_FULLSCREEN
 	);
 	if (!window) {
@@ -78,6 +78,15 @@ void render_triangle_solid_wireframe(triangle_t t) {
 	draw_triangle(t, BLACK);
 }
 
+// void render_triangle_textured(triangle_t t) {
+// 	texture_triangle(t);
+// }
+
+// void render_triangle_textured_wireframe(triangle_t t) {
+// 	texture_triangle(t);
+// 	draw_triangle(t, BLACK);
+// }
+
 triangleRenderFunc triangleRendererForMode() {
 	switch (render_mode) {
 	case RENDER_MODE_VERTEX:
@@ -92,39 +101,30 @@ triangleRenderFunc triangleRendererForMode() {
 	case RENDER_MODE_SOLID:
 		return &render_triangle_solid;
 		break;
+	// case RENDER_MODE_TEXTURE:
+	// 	return &render_triangle_textured;
+	// 	break;
+	// case RENDER_MODE_TEXTURE_WIREFRAME:
+	// 	return &render_triangle_textured_wireframe;
+	// 	break;
 	default:
 		return &render_triangle_solid_wireframe;
 	}
 }
 
-bool shouldCull(vec3_t* vertices) {
-	if (!enable_backface_culling) {
-		return false;
-	}
-
-	vec3_t a = vec3_normalize(vertices[0]);
-	vec3_t n = face_normal(vertices);
-	vec3_t acam = vec3_sub(camera_position, a);
-	if (vec3_dot(n, acam) <= 0) {
-		return true;
-	}
-	return false;
-}
-
-
 // TODO: Convert all draw methods to use vecs and triangles until the last possible moment.
 
 void draw_pixel(int x, int y, color_t color) {
-	if (x < 0 || x >= window_width || y < 0 || y >= window_height) {
+	if (x < 0 || x >= g_window_width || y < 0 || y >= g_window_height) {
 		return;
 	}
 
-	color_buffer[window_width * y + x] = color;
+	color_buffer[g_window_width * y + x] = color;
 }
 
 void draw_grid(void) {
-	for (int y = 0; y < window_height; y++) {
-		for (int x = 0; x < window_width; x++) {
+	for (int y = 0; y < g_window_height; y++) {
+		for (int x = 0; x < g_window_width; x++) {
 			if (y % GRID_SPACING_PX == 0 || x % GRID_SPACING_PX == 0) {
 				draw_pixel(x, y, BLACK);
 			}
@@ -299,7 +299,7 @@ void render_color_buffer(void) {
 		color_buffer_texture,
 		NULL,
 		color_buffer,
-		(window_width * sizeof(color_t))
+		(g_window_width * sizeof(color_t))
 	);
 	SDL_RenderCopy(
 		renderer,
@@ -310,7 +310,7 @@ void render_color_buffer(void) {
 }
 
 void clear_color_buffer(color_t color) {
-	int pixels = window_height * window_width;
+	int pixels = g_window_height * g_window_width;
 	for (int i = 0; i < pixels; i++) {
 		color_buffer[i] = color;
 	}

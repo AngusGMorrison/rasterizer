@@ -1,6 +1,6 @@
 #include "color.h"
 
-color_t color_illuminate(color_t original, float intensity) {
+color_t color_adjust_intensity(color_t original, float intensity) {
 	color_t a = original & MAX_ALPHA;
 	color_t r = (original & 0x00FF0000) * intensity;
 	color_t g = (original & 0x0000FF00) * intensity;
