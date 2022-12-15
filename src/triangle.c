@@ -14,9 +14,12 @@ triangle_t new_triangle_from_face(const face_t* f, const mat4_t* projection) {
 	triangle_t t = new_triangle();
 	t.fill = f->color;
 	t.avg_depth = face_avg_depth(f);
-	t.vertices[0] = mat4_project_vec3(projection, &f->a);
-	t.vertices[1] = mat4_project_vec3(projection, &f->b);
-	t.vertices[2] = mat4_project_vec3(projection, &f->c);
+
+	for (int i = 0; i < 3; i++) {
+		t.vertices[i] = mat4_project_vec3(projection, &f->vertices[i]);
+		t.tex_coords[i] = f->tex_coords[i];
+	}
+
 	return t;
 }
 

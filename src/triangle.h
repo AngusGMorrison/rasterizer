@@ -48,7 +48,6 @@ void triangle_position_on_screen(triangle_t *t, int window_width, int window_hei
 
 // comparator used for sorting triangles by their average depth.
 bool triangle_less_depth(const void* a, const void* b);
-
 // void triangle_set_tex_coords_from_face(triangle_t* t, mesh_face_t f);
 
 #endif

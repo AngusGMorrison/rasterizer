@@ -7,6 +7,7 @@
 extern const int texture_width;
 extern const int texture_height;
 extern const uint8_t REDBRICK_TEXTURE[];
+extern uint32_t* g_mesh_texture;
 
 typedef struct tex2_t {
 	float u;

@@ -1,24 +1,6 @@
+#include <stdlib.h>
+
 #include "sort.h"
-
-// Generic insertion sort. Handles all input arrays as arrays of bytes, requiring the size of the
-// elements to offset the correct number of bytes when iterating, comparing and swapping.
-void insertion_sort(void* arr, size_t len, size_t obj_size, comparator less) {
-	char* charr = (char*)arr; // convert arr to an array of bytes
-	char* cur_elem = malloc(obj_size); // since we don't know its type, ther current element must also be stored as an array of bytes
-	char* max = charr + (len * obj_size); // end of the array
-	char* i;
-	char* j;
-
-	for (i = charr + obj_size; i < max; i += obj_size) {
-		memcpy(cur_elem, i, obj_size); // save the current element
-		for (j = i; j > charr && less(cur_elem, j - obj_size); j -= obj_size) {
-			memcpy(j, j - obj_size, obj_size); // slide any element greater than the current one up one space
-		}
-		memcpy(j, cur_elem, obj_size); // copy the current element into its final position
-	}
-
-	free(cur_elem);
-}
 
 void swap(char* i, char* j, char* temp, size_t obj_size) {
 	memcpy(temp, i, obj_size);
@@ -72,9 +54,24 @@ void qsort_internal(char* lo, char* hi, size_t obj_size, comparator less) {
 	qsort_internal(pivot + obj_size, hi, obj_size, less);
 }
 
+// Returns an integer in the range [lo,hi).
+int randIntInRange(int lo, int hi) {
+	return lo + rand() % (hi - lo);
+}
+
+void shuffle(char* arr, size_t len, size_t obj_size) {
+	char* temp = must_malloc(obj_size);
+	for (int i = 0; i < len; i++) {
+		int swapIdx = randIntInRange(i, len);
+		char* swapPtr = arr + swapIdx * obj_size;
+		swap(arr, swapPtr, temp, obj_size);
+	}
+	free(temp);
+}
+
 void quick_sort(void* arr, size_t len, size_t obj_size, comparator less) {
 	char* charr = (char*)arr;
 	char* hi = charr + ((len - 1) * obj_size); // index of the last element
+	shuffle(charr, len, obj_size); // randomize the array to avoid worst-case performance
 	qsort_internal(charr, hi, obj_size, less);
-	// TODO: Shuffle.
 }

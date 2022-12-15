@@ -10,7 +10,6 @@
 
 typedef bool(*comparator)(const void*, const void*);
 
-void insertion_sort(void* arr, size_t len, size_t obj_size, comparator less);
 void quick_sort(void* arr, size_t len, size_t obj_size, comparator less);
 
 #endif

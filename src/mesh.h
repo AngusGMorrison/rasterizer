@@ -28,13 +28,9 @@ Structs
 // mesh_face_t stores the indices of 3 vectors in 3D space that represent the vertices a triangular
 // face.
 typedef struct mesh_face_t {
-	int a;
-	int b;
-	int c;
+	int a, b, c;
+	tex2_t a_uv, b_uv, c_uv;
 	vec3_t* mesh_vertices;
-	tex2_t a_uv;
-	tex2_t b_uv;
-	tex2_t c_uv;
 	color_t color;
 } mesh_face_t;
 

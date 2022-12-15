@@ -12,8 +12,9 @@
 #include "face.h"
 #include "float.h"
 #include "light.h"
-#include "vector.h"
+#include "texture.h"
 #include "triangle.h"
+#include "vector.h"
 
 /*
 Constants, global variables and enums
@@ -73,35 +74,6 @@ extern mat4_t g_projection_matrix;
 
 // Position of the camera.
 extern vec3_t g_camera_position;
-
-
-/*
-Structs
-*/
-
-// display_point_t is a 2D integer vector whose x and y component correspond directly to pixels on
-// the screen.
-typedef struct display_point_t {
-	int x, y;
-} display_point_t;
-
-// display_triangle_t encapsulates the data required to render a triangle to the screen. It differs
-// from triangle_t in that its vertices are integer points corresponding to pixels on-screen.
-typedef struct display_triangle_t {
-	display_point_t vertices[3];
-	color_t fill;
-	color_t border;
-	// int au, av, bu, bv, cu, cv;
-} display_triangle_t;
-
-// display_rectangle_t encapsulates the data required to render a rectangle to the screen.
-typedef struct display_rectangle_t {
-	display_point_t point;
-	int w, h;
-	color_t fill;
-	color_t border;
-} display_rectangle_t;
-
 
 /*
 Functions

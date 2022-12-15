@@ -3,13 +3,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include <time.h>
 
 #include "array.h"
 #include "display.h"
 #include "mesh.h"
 #include "must.h"
+#include "texture.h"
+#include "triangle.h"
 #include "vector.h"
-
 
 // Global variables for execution status and game loop.
 bool g_is_running = false;
@@ -17,6 +19,7 @@ Uint64 g_prev_frame_time = 0;
 triangle_t* g_triangles_to_render = NULL; // dynamic array of triangles to render
 
 int setup(void) {
+	srand(time(0)); // seed the random number generator (used for sorting)
 	g_color_buffer = must_malloc(sizeof(color_t) * g_window_width * g_window_height);
 	g_color_buffer_texture = SDL_CreateTexture(
 		g_renderer,
@@ -26,7 +29,13 @@ int setup(void) {
 		g_window_height
 	);
 	g_projection_matrix = mat4_make_perspective(fov_rads, g_window_height / (float)g_window_width, 0.1, 100.0);
-	return load_mesh("assets/f22.obj");
+
+	// Manually load hard-coded texture from static array.
+	g_mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+
+	load_cube();
+	return 0;
+	// return load_mesh("assets/f22.obj");
 }
 
 void process_keydown(SDL_KeyCode key) {
@@ -49,9 +58,9 @@ void process_keydown(SDL_KeyCode key) {
 	case SDLK_5:
 		g_render_mode = RENDER_MODE_FILL_WIREFRAME;
 		break;
-	// case SDLK_6:
-	// 	g_render_mode = RENDER_MODE_TEXTURE;
-	// 	break;
+	case SDLK_6:
+		g_render_mode = RENDER_MODE_TEXTURE;
+		break;
 	// case SDLK_7:
 	// 	g_render_mode = RENDER_MODE_TEXTURE_WIREFRAME;
 	// 	break;
@@ -89,12 +98,12 @@ void await_frame(void) {
 
 void update_mesh(void) {
 	g_mesh.rotation.x += 0.05;
-	// g_mesh.rotation.y += 0.05;
+	g_mesh.rotation.y += 0.05;
 	// g_mesh.rotation.z += 0.05;
 	// g_mesh.scale.x += 0.002;
 	// g_mesh.scale.y += 0.001;
 	// g_mesh.translation.x += 0.01;
-	g_mesh.translation.z = 5.0;
+	g_mesh.translation.z = 15.0;
 }
 
 // Create a new set of triangles to render based on the latest position of the mesh.
