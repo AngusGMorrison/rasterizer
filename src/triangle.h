@@ -19,6 +19,7 @@ typedef struct triangle_t {
 	vec2_t vertices[3];
 	tex2_t tex_coords[3];
 	color_t fill;
+	color_t border;
 	float avg_depth;
 } triangle_t;
 
@@ -48,6 +49,30 @@ void triangle_position_on_screen(triangle_t *t, int window_width, int window_hei
 
 // comparator used for sorting triangles by their average depth.
 bool triangle_less_depth(const void* a, const void* b);
-// void triangle_set_tex_coords_from_face(triangle_t* t, mesh_face_t f);
+
+bool triangle_has_zero_height(const triangle_t* t);
+
+void triangle_sort_vertices_by_y(triangle_t* t);
+
+// Truncates floating point values in the triangle's position vectors.
+void triangle_truncate_vertices(triangle_t* t);
+
+/*
+triangle_b_hyp_intercept returns the vector at which a horizontal line projected from
+the triangle's middle vertex (by y-value), b, will intercept the hypotenuse, ac, producing two
+triangles with a flat bottom and flat top, respectively. The input triangle's vertices must be
+sorted by y-value.
+
+                /|
+               / |
+              /  |
+             ----|  <- intercept
+             \_  |
+               \ |
+                \|
+*/
+vec2_t triangle_b_hyp_intercept(const triangle_t* t);
+
+vec3_t triangle_barycentric_weights(const triangle_t* t, vec2_t p);
 
 #endif

@@ -27,6 +27,7 @@ typedef struct mat4_t {
 vec2_t vec2_from_vec3(const vec3_t* v);
 float vec2_magnitude(vec2_t v);
 float vec2_gradient(vec2_t a, vec2_t b);
+float vec2_inv_gradient(vec2_t a, vec2_t b);
 vec2_t vec2_add(vec2_t a, vec2_t b);
 vec2_t vec2_sub(vec2_t a, vec2_t b);
 vec2_t vec2_scale(vec2_t v, float s);

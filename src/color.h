@@ -21,6 +21,7 @@ typedef uint32_t color_t;
 extern const color_t DEFAULT_BORDER_COLOR;
 extern const color_t DEFAULT_FILL_COLOR;
 extern const color_t DEFAULT_WIREFRAME_COLOR;
+extern const color_t DEFAULT_VERTEX_COLOR;
 
 // color_adjust_intensity returns a new color based on multiplying each of the ARGB fields of the
 // input color by the given factor. intensity must be >= 0.

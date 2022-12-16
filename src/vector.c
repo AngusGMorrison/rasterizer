@@ -13,6 +13,18 @@ float vec2_gradient(vec2_t a, vec2_t b) {
 	return (b.y - a.y) / (b.x - a.x);
 }
 
+float vec2_inv_gradient(vec2_t a, vec2_t b) {
+	// Guard against zero division errors, which may occur when all three points of a triangle lie
+	// on a line due to float to int truncation.
+	if (a.y == b.y) {
+		return 0;
+	}
+
+
+	return ((int)b.x - (int)a.x) / (float)((int)b.y - (int)a.y);
+}
+
+
 vec2_t vec2_add(vec2_t a, vec2_t b) {
 	a.x += b.x;
 	a.y += b.y;

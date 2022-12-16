@@ -3,6 +3,7 @@
 const color_t DEFAULT_BORDER_COLOR = BLACK;
 const color_t DEFAULT_FILL_COLOR = WHITE;
 const color_t DEFAULT_WIREFRAME_COLOR = GREEN;
+const color_t DEFAULT_VERTEX_COLOR = RED;
 
 color_t color_adjust_intensity(color_t original, float intensity) {
 	// Modify each byte in isolation.

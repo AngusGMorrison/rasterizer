@@ -103,7 +103,7 @@ void update_mesh(void) {
 	// g_mesh.scale.x += 0.002;
 	// g_mesh.scale.y += 0.001;
 	// g_mesh.translation.x += 0.01;
-	g_mesh.translation.z = 15.0;
+	g_mesh.translation.z = 10.0;
 }
 
 // Create a new set of triangles to render based on the latest position of the mesh.
