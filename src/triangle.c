@@ -73,8 +73,27 @@ bool triangle_less_depth(const void* a, const void* b) {
 	return ta->avg_depth < tb->avg_depth;
 }
 
-bool triangle_has_zero_height(const triangle_t* t) {
-	return fabsf(t->vertices[0].y - t->vertices[1].y) < 1 && fabsf(t->vertices[1].y - t->vertices[2].y) < 1;
+// triangle_is_line returns true if the triangle's points are collinear, including if two or more
+// points are equal.
+bool triangle_is_line(const triangle_t* t) {
+	vec2_t a = triangle_vertex_a(t);
+	vec2_t b = triangle_vertex_b(t);
+	vec2_t c = triangle_vertex_c(t);
+	float m_ab = vec2_gradient(a, b);
+	float m_ac = vec2_gradient(a, c);
+	if (
+		m_ab == m_ac || // points are collinear (also tests whether b and c are the same point)
+		(isinf(m_ab) && isinf(m_ac)) || // points are collinear in a vertical line
+		isnan(m_ab) || // a and b are the same point
+		isnan(m_ac) // a and c are the same point
+	) {
+		return true;
+	}
+	return false;
+}
+
+bool triangle_is_renderable(const triangle_t* t) {
+	return !triangle_is_line(t);
 }
 
 // Insertion sort a triangle's vertices and their corresponding tex_coords by their y-coordinates.
@@ -127,6 +146,9 @@ vec3_t triangle_barycentric_weights(const triangle_t* t, vec2_t p) {
 	vec2_t pc = vec2_sub(c, p);
 
 	float area_parallelogram_abc = (ac.x * ab.y - ac.y * ab.x);
+	// if (area_parallelogram_abc == 0) { // triangle is unrenderably small
+
+	// }
 	float area_parallelogram_pcb = (pc.x * pb.y - pc.y * pb.x);
 	float area_parallelogram_acp = (ac.x * ap.y - ac.y * ap.x);
 	float alpha = area_parallelogram_pcb / area_parallelogram_abc;

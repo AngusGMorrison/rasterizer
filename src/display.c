@@ -63,21 +63,19 @@ void draw_pixel(int x, int y, color_t color) {
 }
 
 void draw_texel(int x, int y, const triangle_t* t, const uint32_t* texture) {
+	// Calculate the UV coordinates for the point based on its position relative to the vertices of
+	// the triangle.
 	vec3_t weights = triangle_barycentric_weights(t, (vec2_t){x, y});
 	float alpha = weights.x;
 	float beta = weights.y;
 	float gamma = weights.z;
-
 	tex2_t uv_a = t->tex_coords[0];
 	tex2_t uv_b = t->tex_coords[1];
 	tex2_t uv_c = t->tex_coords[2];
-
 	float interpolated_u = uv_a.u * alpha + uv_b.u * beta + uv_c.u * gamma;
 	float interpolated_v = uv_a.v * alpha + uv_b.v * beta + uv_c.v * gamma;
-	if (interpolated_u > 1 || interpolated_v > 1) {
-		return;
-	}
-
+	
+	// Map the UV coordinates to a pixel in the texture.
 	int texture_x = abs((int)(interpolated_u * texture_width));
 	int texture_y = abs((int)(interpolated_v * texture_height));
 	if (texture_x >= texture_width || texture_y >= texture_height) {
@@ -124,20 +122,20 @@ void draw_triangle(const triangle_t* t) {
 	draw_line(triangle_vertex_c(t), triangle_vertex_a(t), t->border);
 }
 
-void triangle_render_vertices(const triangle_t* t) {
+void render_triangle_vertices(const triangle_t* t) {
 	for (int j = 0; j < 3; j++) {
 		draw_rectangle(t->vertices[j], VERTEX_RECT_WIDTH_PX, VERTEX_RECT_WIDTH_PX, DEFAULT_VERTEX_COLOR);
 	}
 }
 
-void triangle_render_wireframe(triangle_t* t) {
+void wireframe_triangle(triangle_t* t) {
 	t->border = GREEN;
 	draw_triangle(t);
 }
 
-void triangle_render_vertex_wireframe(triangle_t* t) {
-	triangle_render_wireframe(t);
-	triangle_render_vertices(t);
+void wireframe_triangle_with_vertices(triangle_t* t) {
+	wireframe_triangle(t);
+	render_triangle_vertices(t);
 }
 
 // fill_triangle fills the given display triangle by sorting its vertices by their
@@ -145,7 +143,7 @@ void triangle_render_vertex_wireframe(triangle_t* t) {
 // reaches the middle vertex, which is the triangle's widest point. It then draws increasingly
 // narrow lines until reaching the bottom of the triangle.
 void fill_triangle(triangle_t* t) {
-	if (triangle_has_zero_height(t)) { // triangle is too small to render
+	if (!triangle_is_renderable(t)) { // triangle is too small to render
 		return;
 	}
 
@@ -184,7 +182,7 @@ void fill_triangle(triangle_t* t) {
 	}
 }
 
-void triangle_fill_wireframe(triangle_t* t) {
+void fill_triangle_with_wireframe(triangle_t* t) {
 	fill_triangle(t);
 	draw_triangle(t);
 }
@@ -207,10 +205,6 @@ void triangle_fill_wireframe(triangle_t* t) {
 //                      c
 //
 void texture_triangle(triangle_t* t, const uint32_t* texture) {
-	if (triangle_has_zero_height(t)) { // triangle is too small to render
-		return;
-	}
-
 	// Calculate the change in x with respect to y (inverse gradient) for both opposing sides of the
 	// triangle. We know that y (representing the current scan line) will increase monotonically –
 	// the change in x is our unknown.
@@ -248,19 +242,30 @@ void texture_triangle(triangle_t* t, const uint32_t* texture) {
 	}
 }
 
+void texture_triangle_with_wireframe(triangle_t* t, const uint32_t* texture) {
+	t->border = WHITE;
+	texture_triangle(t, texture);
+	draw_triangle(t);
+}
+
+// render_triangle renders the given triangle to the screen based on the current rendering mode.
 void render_triangle(triangle_t* t) {
-	// Truncating floating point vertices at the outset avoids a host of downstream floating-point
-	// issues when drawing to the screen.
+	if (!triangle_is_renderable(t)) {
+		return;
+	}
+
+	// Truncating floating point vertices to integers at the outset avoids a host of downstream
+	// floating-point issues when drawing to the screen.
 	triangle_truncate_vertices(t);
 	switch (g_render_mode) {
 	case RENDER_MODE_VERTEX:
-		triangle_render_vertices(t);
+		render_triangle_vertices(t);
 		break;
 	case RENDER_MODE_WIREFRAME:
-		triangle_render_wireframe(t);
+		wireframe_triangle(t);
 		break;
 	case RENDER_MODE_VERTEX_WIREFRAME:
-		triangle_render_vertex_wireframe(t);
+		wireframe_triangle_with_vertices(t);
 		break;
 	case RENDER_MODE_FILL:
 		fill_triangle(t);
@@ -268,11 +273,11 @@ void render_triangle(triangle_t* t) {
 	case RENDER_MODE_TEXTURE:
 		texture_triangle(t, g_mesh_texture);
 		break;
-	// case RENDER_MODE_TEXTURE_WIREFRAME:
-	// 	return &render_triangle_textured_wireframe;
-	// 	break;
+	case RENDER_MODE_TEXTURE_WIREFRAME:
+		return texture_triangle_with_wireframe(t, g_mesh_texture);
+		break;
 	default:
-		triangle_fill_wireframe(t);
+		fill_triangle_with_wireframe(t);
 	}
 }
 

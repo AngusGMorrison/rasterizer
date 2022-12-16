@@ -5,6 +5,10 @@ vec2_t vec2_from_vec3(const vec3_t* v) {
 	return result;
 }
 
+bool vec2_eq(vec2_t a, vec2_t b) {
+	return a.x == b.x && a.y == b.y;
+}
+
 float vec2_magnitude(vec2_t v) {
 	return sqrt(v.x * v.x + v.y * v.y);
 }

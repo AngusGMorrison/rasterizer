@@ -61,9 +61,9 @@ void process_keydown(SDL_KeyCode key) {
 	case SDLK_6:
 		g_render_mode = RENDER_MODE_TEXTURE;
 		break;
-	// case SDLK_7:
-	// 	g_render_mode = RENDER_MODE_TEXTURE_WIREFRAME;
-	// 	break;
+	case SDLK_7:
+		g_render_mode = RENDER_MODE_TEXTURE_WIREFRAME;
+		break;
 	case SDLK_c:
 		g_enable_back_face_culling = !g_enable_back_face_culling;
 		break;
@@ -99,11 +99,11 @@ void await_frame(void) {
 void update_mesh(void) {
 	g_mesh.rotation.x += 0.05;
 	g_mesh.rotation.y += 0.05;
-	// g_mesh.rotation.z += 0.05;
+	g_mesh.rotation.z += 0.05;
 	// g_mesh.scale.x += 0.002;
 	// g_mesh.scale.y += 0.001;
 	// g_mesh.translation.x += 0.01;
-	g_mesh.translation.z = 10.0;
+	g_mesh.translation.z = 15.0;
 }
 
 // Create a new set of triangles to render based on the latest position of the mesh.
@@ -125,8 +125,6 @@ void update(void) {
 		face_illuminate(&face, &g_light);
 		triangle_t triangle = new_triangle_from_face(&face, &g_projection_matrix);
 		triangle_position_on_screen(&triangle, g_window_width, g_window_height);
-		// triangle_set_tex_coords_from_face(&triangle, mesh_face);
-
 		array_push(g_triangles_to_render, triangle);
 	}
 }

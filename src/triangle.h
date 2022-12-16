@@ -50,8 +50,10 @@ void triangle_position_on_screen(triangle_t *t, int window_width, int window_hei
 // comparator used for sorting triangles by their average depth.
 bool triangle_less_depth(const void* a, const void* b);
 
-bool triangle_has_zero_height(const triangle_t* t);
+// Returns true if the triangle's dimensions make it possible to render.
+bool triangle_is_renderable(const triangle_t* t);
 
+// Sorts the triangle's vertices by their y-coordinates in-place.
 void triangle_sort_vertices_by_y(triangle_t* t);
 
 // Truncates floating point values in the triangle's position vectors.
@@ -73,6 +75,8 @@ sorted by y-value.
 */
 vec2_t triangle_b_hyp_intercept(const triangle_t* t);
 
+// Returns the barycentric weights alpha, beta and gamma as a vec3, which can be used to map p to
+// its UV coordinates.
 vec3_t triangle_barycentric_weights(const triangle_t* t, vec2_t p);
 
 #endif
