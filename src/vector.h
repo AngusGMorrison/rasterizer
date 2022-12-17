@@ -64,6 +64,6 @@ mat4_t mat4_make_rotation_z(float a);
 vec4_t mat4_mul_vec4(const mat4_t* m, const vec4_t* v);
 mat4_t mat4_mul(const mat4_t* a, const mat4_t* b);
 mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar);
-vec2_t mat4_project_vec3(const mat4_t* m, const vec3_t* v);
+vec3_t mat4_project_vec3(const mat4_t* m, const vec3_t* v);
 
 #endif

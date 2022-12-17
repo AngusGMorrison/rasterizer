@@ -324,9 +324,8 @@ mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
 	return m;
 }
 
-vec2_t mat4_project_vec3(const mat4_t* m, const vec3_t* v) {
+vec3_t mat4_project_vec3(const mat4_t* m, const vec3_t* v) {
 	vec4_t homogeneous = vec4_from_vec3(v);
 	vec4_t projected = mat4_mul_vec4(m, &homogeneous);
-	vec3_t reduced = vec3_from_vec4(&projected);
-	return vec2_from_vec3(&reduced);
+	return vec3_from_vec4(&projected);
 }

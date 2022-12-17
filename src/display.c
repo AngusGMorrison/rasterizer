@@ -74,7 +74,7 @@ void draw_texel(int x, int y, const triangle_t* t, const uint32_t* texture) {
 	tex2_t uv_c = t->tex_coords[2];
 	float interpolated_u = uv_a.u * alpha + uv_b.u * beta + uv_c.u * gamma;
 	float interpolated_v = uv_a.v * alpha + uv_b.v * beta + uv_c.v * gamma;
-	
+
 	// Map the UV coordinates to a pixel in the texture.
 	int texture_x = abs((int)(interpolated_u * texture_width));
 	int texture_y = abs((int)(interpolated_v * texture_height));
@@ -106,25 +106,25 @@ void draw_line(vec2_t a, vec2_t b, color_t color) {
 	}
 }
 
-void draw_rectangle(vec2_t p, int w, int h, color_t color) {
+void draw_rectangle(const vec3_t* p, int w, int h, color_t color) {
 	for (int i = 0; i < w; i++) {
-		int cur_x = p.x + i;
+		int cur_x = p->x + i;
 		for (int j = 0; j < h; j++) {
-			int cur_y = p.y + j;
+			int cur_y = p->y + j;
 			draw_pixel(cur_x, cur_y, color);
 		}
 	}
 }
 
 void draw_triangle(const triangle_t* t) {
-	draw_line(triangle_vertex_a(t), triangle_vertex_b(t), t->border);
-	draw_line(triangle_vertex_b(t), triangle_vertex_c(t), t->border);
-	draw_line(triangle_vertex_c(t), triangle_vertex_a(t), t->border);
+	draw_line(vec2_from_vec3(triangle_vertex_a(t)), vec2_from_vec3(triangle_vertex_b(t)), t->border);
+	draw_line(vec2_from_vec3(triangle_vertex_b(t)), vec2_from_vec3(triangle_vertex_c(t)), t->border);
+	draw_line(vec2_from_vec3(triangle_vertex_c(t)), vec2_from_vec3(triangle_vertex_a(t)), t->border);
 }
 
 void render_triangle_vertices(const triangle_t* t) {
 	for (int j = 0; j < 3; j++) {
-		draw_rectangle(t->vertices[j], VERTEX_RECT_WIDTH_PX, VERTEX_RECT_WIDTH_PX, DEFAULT_VERTEX_COLOR);
+		draw_rectangle(&t->vertices[j], VERTEX_RECT_WIDTH_PX, VERTEX_RECT_WIDTH_PX, DEFAULT_VERTEX_COLOR);
 	}
 }
 
@@ -151,9 +151,9 @@ void fill_triangle(triangle_t* t) {
 	// triangle. We know that y (representing the current scan line) will increase monotonically –
 	// the change in x is our unknown.
 	triangle_sort_vertices_by_y(t);
-	vec2_t a = triangle_vertex_a(t);
-	vec2_t b = triangle_vertex_b(t);
-	vec2_t c = triangle_vertex_c(t);
+	vec2_t a = vec2_from_vec3(triangle_vertex_a(t));
+	vec2_t b = vec2_from_vec3(triangle_vertex_b(t));
+	vec2_t c = vec2_from_vec3(triangle_vertex_c(t));
 	vec2_t m = triangle_b_hyp_intercept(t); // the point at which a line projected horizontally from b intercepts ac
 	float inv_m_ab = vec2_inv_gradient(a, b);
 	float inv_m_bc = vec2_inv_gradient(b, c);
@@ -209,9 +209,9 @@ void texture_triangle(triangle_t* t, const uint32_t* texture) {
 	// triangle. We know that y (representing the current scan line) will increase monotonically –
 	// the change in x is our unknown.
 	triangle_sort_vertices_by_y(t);
-	vec2_t a = triangle_vertex_a(t);
-	vec2_t b = triangle_vertex_b(t);
-	vec2_t c = triangle_vertex_c(t);
+	vec2_t a = vec2_from_vec3(triangle_vertex_a(t));
+	vec2_t b = vec2_from_vec3(triangle_vertex_b(t));
+	vec2_t c = vec2_from_vec3(triangle_vertex_c(t));
 	vec2_t m = triangle_b_hyp_intercept(t); // the point at which a line projected horizontally from b intercepts ac
 	float inv_m_ab = vec2_inv_gradient(a, b);
 	float inv_m_bc = vec2_inv_gradient(b, c);
@@ -256,7 +256,7 @@ void render_triangle(triangle_t* t) {
 
 	// Truncating floating point vertices to integers at the outset avoids a host of downstream
 	// floating-point issues when drawing to the screen.
-	triangle_truncate_vertices(t);
+	triangle_truncate_xy_components(t);
 	switch (g_render_mode) {
 	case RENDER_MODE_VERTEX:
 		render_triangle_vertices(t);

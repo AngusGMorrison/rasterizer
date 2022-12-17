@@ -16,7 +16,9 @@ Structs
 // triangle_t stores three vectors in 2D space that represent the vertices of a projected triangular
 // face.
 typedef struct triangle_t {
-	vec2_t vertices[3];
+	// Depsite being 2D, the triangle's vertices store depth information for perspective-correct
+	// texture mapping.
+	vec3_t vertices[3];
 	tex2_t tex_coords[3];
 	color_t fill;
 	color_t border;
@@ -35,9 +37,9 @@ triangle_t new_triangle();
 triangle_t new_triangle_from_face(const face_t* f, const mat4_t* projection);
 
 // Getters for named vertices.
-vec2_t triangle_vertex_a(const triangle_t* t);
-vec2_t triangle_vertex_b(const triangle_t* t);
-vec2_t triangle_vertex_c(const triangle_t* t);
+const vec3_t* triangle_vertex_a(const triangle_t* t);
+const vec3_t* triangle_vertex_b(const triangle_t* t);
+const vec3_t* triangle_vertex_c(const triangle_t* t);
 
 // Getters for named texture coordinates.
 tex2_t triangle_tex_a(const triangle_t* t);
@@ -57,7 +59,7 @@ bool triangle_is_renderable(const triangle_t* t);
 void triangle_sort_vertices_by_y(triangle_t* t);
 
 // Truncates floating point values in the triangle's position vectors.
-void triangle_truncate_vertices(triangle_t* t);
+void triangle_truncate_xy_components(triangle_t* t);
 
 /*
 triangle_b_hyp_intercept returns the vector at which a horizontal line projected from
