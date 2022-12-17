@@ -24,15 +24,15 @@ triangle_t new_triangle_from_face(const face_t* f, const mat4_t* projection) {
 	return t;
 }
 
-const vec3_t* triangle_vertex_a(const triangle_t* t) {
+const vec4_t* triangle_vertex_a(const triangle_t* t) {
 	return &t->vertices[0];
 }
 
-const vec3_t* triangle_vertex_b(const triangle_t* t) {
+const vec4_t* triangle_vertex_b(const triangle_t* t) {
 	return &t->vertices[1];
 }
 
-const vec3_t* triangle_vertex_c(const triangle_t* t) {
+const vec4_t* triangle_vertex_c(const triangle_t* t) {
 	return &t->vertices[2];
 }
 
@@ -76,9 +76,9 @@ bool triangle_less_depth(const void* a, const void* b) {
 // triangle_is_line returns true if the triangle's points are collinear, including if two or more
 // points are equal.
 bool triangle_is_line(const triangle_t* t) {
-	const vec3_t* a = triangle_vertex_a(t);
-	const vec3_t* b = triangle_vertex_b(t);
-	const vec3_t* c = triangle_vertex_c(t);
+	const vec4_t* a = triangle_vertex_a(t);
+	const vec4_t* b = triangle_vertex_b(t);
+	const vec4_t* c = triangle_vertex_c(t);
 	float m_ab = vec2_gradient((vec2_t){a->x, a->y}, (vec2_t){b->x, b->y});
 	float m_ac = vec2_gradient((vec2_t){a->x, a->y}, (vec2_t){c->x, c->y});
 	if (
@@ -100,7 +100,7 @@ bool triangle_is_renderable(const triangle_t* t) {
 void triangle_sort_vertices_by_y(triangle_t* t) {
 	for (int i = 1; i < 3; i++) {
 		int j;
-		vec3_t vert = t->vertices[i];
+		vec4_t vert = t->vertices[i];
 		tex2_t tex = t-> tex_coords[i];
 		for (j = i; j > 0 && vert.y < t->vertices[j-1].y; j--) {
 			t->vertices[j] = t->vertices[j-1];
@@ -113,16 +113,16 @@ void triangle_sort_vertices_by_y(triangle_t* t) {
 
 void triangle_truncate_xy_components(triangle_t* t) {
 	for (int i = 0; i < 3; i++) {
-		vec3_t* v = &t->vertices[i];
+		vec4_t* v = &t->vertices[i];
 		v->x = (int)v->x;
 		v->y = (int)v->y;
 	}
 }
 
 vec2_t triangle_b_hyp_intercept(const triangle_t* t) {
-	const vec3_t* a = triangle_vertex_a(t);
-	const vec3_t* b = triangle_vertex_b(t);
-	const vec3_t* c = triangle_vertex_c(t);
+	const vec4_t* a = triangle_vertex_a(t);
+	const vec4_t* b = triangle_vertex_b(t);
+	const vec4_t* c = triangle_vertex_c(t);
 	vec2_t intercept = {
 		.x = ((c->x - a->x) * (b->y - a->y) / (c->y - a->y)) + a->x,
 		.y = b->y,
@@ -135,9 +135,9 @@ vec2_t triangle_b_hyp_intercept(const triangle_t* t) {
 // Return the barycentric weights for point p within the given triangle, t.
 vec3_t triangle_barycentric_weights(const triangle_t* t, vec2_t p) {
 	// Find the vectors between each vertex and point p in the plane.
-	vec2_t a = vec2_from_vec3(triangle_vertex_a(t));
-	vec2_t b = vec2_from_vec3(triangle_vertex_b(t));
-	vec2_t c = vec2_from_vec3(triangle_vertex_c(t));
+	vec2_t a = vec2_from_vec4(triangle_vertex_a(t));
+	vec2_t b = vec2_from_vec4(triangle_vertex_b(t));
+	vec2_t c = vec2_from_vec4(triangle_vertex_c(t));
 	vec2_t ac = vec2_sub(c, a);
 	vec2_t ab = vec2_sub(b, a);
 	vec2_t ap = vec2_sub(p, a);

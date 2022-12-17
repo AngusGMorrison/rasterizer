@@ -5,6 +5,10 @@ vec2_t vec2_from_vec3(const vec3_t* v) {
 	return result;
 }
 
+vec2_t vec2_from_vec4(const vec4_t* v) {
+	return (vec2_t) { v->x, v->y };
+}
+
 bool vec2_eq(vec2_t a, vec2_t b) {
 	return a.x == b.x && a.y == b.y;
 }
@@ -324,8 +328,13 @@ mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
 	return m;
 }
 
-vec3_t mat4_project_vec3(const mat4_t* m, const vec3_t* v) {
+vec4_t mat4_project_vec3(const mat4_t* m, const vec3_t* v) {
 	vec4_t homogeneous = vec4_from_vec3(v);
 	vec4_t projected = mat4_mul_vec4(m, &homogeneous);
-	return vec3_from_vec4(&projected);
+	if (projected.w != 0.0) {
+		projected.x /= projected.w;
+		projected.y /= projected.w;
+		projected.z /= projected.w;
+	}
+	return projected;
 }

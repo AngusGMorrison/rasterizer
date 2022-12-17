@@ -25,6 +25,7 @@ typedef struct mat4_t {
 } mat4_t;
 
 vec2_t vec2_from_vec3(const vec3_t* v);
+vec2_t vec2_from_vec4(const vec4_t* v);
 bool vec2_eq(vec2_t a, vec2_t b);
 float vec2_magnitude(vec2_t v);
 float vec2_gradient(vec2_t a, vec2_t b);
@@ -64,6 +65,6 @@ mat4_t mat4_make_rotation_z(float a);
 vec4_t mat4_mul_vec4(const mat4_t* m, const vec4_t* v);
 mat4_t mat4_mul(const mat4_t* a, const mat4_t* b);
 mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar);
-vec3_t mat4_project_vec3(const mat4_t* m, const vec3_t* v);
+vec4_t mat4_project_vec3(const mat4_t* m, const vec3_t* v);
 
 #endif

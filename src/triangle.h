@@ -18,7 +18,7 @@ Structs
 typedef struct triangle_t {
 	// Depsite being 2D, the triangle's vertices store depth information for perspective-correct
 	// texture mapping.
-	vec3_t vertices[3];
+	vec4_t vertices[3];
 	tex2_t tex_coords[3];
 	color_t fill;
 	color_t border;
@@ -37,9 +37,9 @@ triangle_t new_triangle();
 triangle_t new_triangle_from_face(const face_t* f, const mat4_t* projection);
 
 // Getters for named vertices.
-const vec3_t* triangle_vertex_a(const triangle_t* t);
-const vec3_t* triangle_vertex_b(const triangle_t* t);
-const vec3_t* triangle_vertex_c(const triangle_t* t);
+const vec4_t* triangle_vertex_a(const triangle_t* t);
+const vec4_t* triangle_vertex_b(const triangle_t* t);
+const vec4_t* triangle_vertex_c(const triangle_t* t);
 
 // Getters for named texture coordinates.
 tex2_t triangle_tex_a(const triangle_t* t);
