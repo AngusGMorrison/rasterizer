@@ -69,9 +69,14 @@ void draw_texel(int x, int y, const triangle_t* t, const uint32_t* texture) {
 	float alpha = weights.x;
 	float beta = weights.y;
 	float gamma = weights.z;
+	if (alpha < 0 || isnan(alpha) || beta < 0 || isnan(beta) || gamma < 0 || isnan(gamma)) {
+		return;
+	}
+
 	tex2_t uv_a = t->tex_coords[0];
 	tex2_t uv_b = t->tex_coords[1];
 	tex2_t uv_c = t->tex_coords[2];
+
 	const vec4_t* a = triangle_vertex_a(t);
 	const vec4_t* b = triangle_vertex_b(t);
 	const vec4_t* c = triangle_vertex_c(t);
@@ -85,12 +90,16 @@ void draw_texel(int x, int y, const triangle_t* t, const uint32_t* texture) {
 	float interpolated_v = (uv_a.v * i + uv_b.v * j + uv_c.v * k) * recip_divisor;
 
 	// Map the UV coordinates to a pixel in the texture.
-	int texture_x = abs((int)(interpolated_u * texture_width));
-	int texture_y = abs((int)(interpolated_v * texture_height));
-	if (texture_x >= texture_width || texture_y >= texture_height) {
+	int texture_x = abs((int)(interpolated_u * g_texture_width));
+	int texture_y = abs((int)(interpolated_v * g_texture_height));
+	// Due to our imperfect pixel representation of a real triangle, our barycentric weights or UV
+	// interpolation may sometimes indicate that the point lies outside the triangle. We don't
+	// handle this case, which may result in small gaps appearing between faces. GPUs implement
+	// proper fill convention rules to prevent this.
+	if (texture_x < 0 || texture_x >= g_texture_width || texture_y < 0 || texture_y >= g_texture_height) {
 		return;
 	}
-	draw_pixel(x, y, texture[texture_width * texture_y + texture_x]);
+	draw_pixel(x, y, texture[g_texture_width * texture_y + texture_x]);
 }
 
 void draw_line(vec2_t a, vec2_t b, color_t color) {
@@ -259,13 +268,13 @@ void texture_triangle_with_wireframe(triangle_t* t, const uint32_t* texture) {
 
 // render_triangle renders the given triangle to the screen based on the current rendering mode.
 void render_triangle(triangle_t* t) {
+	// Truncating floating point vertices to integers at the outset avoids a host of downstream
+	// floating-point issues when drawing to the screen.
+	triangle_truncate_xy_components(t);
 	if (!triangle_is_renderable(t)) {
 		return;
 	}
 
-	// Truncating floating point vertices to integers at the outset avoids a host of downstream
-	// floating-point issues when drawing to the screen.
-	triangle_truncate_xy_components(t);
 	switch (g_render_mode) {
 	case RENDER_MODE_VERTEX:
 		render_triangle_vertices(t);

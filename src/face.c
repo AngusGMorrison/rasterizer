@@ -5,10 +5,14 @@ face_t new_face_from_mesh_face(const mesh_face_t* mf) {
 		.vertices = {
 			mesh_face_vertex_a(mf),
 			mesh_face_vertex_b(mf),
-			mesh_face_vertex_c(mf),
+			mesh_face_vertex_c(mf)
+		},
+		.tex_coords = {
+			mesh_face_tex_a(mf),
+			mesh_face_tex_b(mf),
+			mesh_face_tex_c(mf)
 		},
         .color = mf->color,
-		.tex_coords = {mf->a_uv, mf->b_uv, mf->c_uv},
 	};
 
 	// y-values must be inverted to account for the fact that models have their
@@ -16,7 +20,7 @@ face_t new_face_from_mesh_face(const mesh_face_t* mf) {
 	// of y at the bottom.
 	for (int i = 0; i < 3; i++) {
 		f.vertices[i].y *= -1;
-		f.tex_coords[i].v *= -1;
+		f.tex_coords[i].v = 1 - f.tex_coords[i].v;
 	}
 
 	return f;

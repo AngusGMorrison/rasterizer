@@ -7,7 +7,7 @@ const color_t DEFAULT_VERTEX_COLOR = RED;
 
 color_t color_adjust_intensity(color_t original, float intensity) {
 	// Modify each byte in isolation.
-	color_t a = original & MAX_ALPHA;
+	color_t a = original & BLACK;
 	color_t r = (original & 0x00FF0000) * intensity;
 	color_t g = (original & 0x0000FF00) * intensity;
 	color_t b = (original & 0x000000FF) * intensity;

@@ -11,6 +11,7 @@
 #include "must.h"
 #include "texture.h"
 #include "triangle.h"
+#include "upng.h"
 #include "vector.h"
 
 // Global variables for execution status and game loop.
@@ -23,19 +24,16 @@ int setup(void) {
 	g_color_buffer = must_malloc(sizeof(color_t) * g_window_width * g_window_height);
 	g_color_buffer_texture = SDL_CreateTexture(
 		g_renderer,
-		SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_RGBA32,
 		SDL_TEXTUREACCESS_STREAMING,
 		g_window_width,
 		g_window_height
 	);
 	g_projection_matrix = mat4_make_perspective(fov_rads, g_window_height / (float)g_window_width, 0.1, 100.0);
 
-	// Manually load hard-coded texture from static array.
-	g_mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
-
-	load_cube();
-	return 0;
-	// return load_mesh("assets/f22.obj");
+	// load_cube();
+	load_png_texture("/Users/amorrison/Documents/github.com/angusgmorrison/rasterizer/assets/f22.png");
+	return load_mesh("/Users/amorrison/Documents/github.com/angusgmorrison/rasterizer/assets/f22.obj");
 }
 
 void process_keydown(SDL_KeyCode key) {
@@ -149,6 +147,7 @@ void render(void) {
 void free_resources(void) {
 	array_free(g_mesh.faces);
 	array_free(g_mesh.vertices);
+	upng_free(png_texture);
 	free(g_color_buffer);
 }
 

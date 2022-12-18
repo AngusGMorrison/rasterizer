@@ -29,8 +29,9 @@ Structs
 // face.
 typedef struct mesh_face_t {
 	int a, b, c;
-	tex2_t a_uv, b_uv, c_uv;
-	vec3_t* mesh_vertices;
+	int a_uv, b_uv, c_uv;
+	const vec3_t* mesh_vertices;
+	const tex2_t* mesh_tex_coords;
 	color_t color;
 } mesh_face_t;
 
@@ -38,6 +39,7 @@ typedef struct mesh_face_t {
 typedef struct mesh_t {
 	vec3_t* vertices; // dynamic array
 	mesh_face_t* faces; // dynamic array
+	tex2_t* tex_coords; // dynamic array
 	vec3_t rotation;
 	vec3_t scale;
 	vec3_t translation;
@@ -54,6 +56,11 @@ Functions
 vec3_t mesh_face_vertex_a(const mesh_face_t* mf);
 vec3_t mesh_face_vertex_b(const mesh_face_t* mf);
 vec3_t mesh_face_vertex_c(const mesh_face_t* mf);
+
+// Getters to expedite tex lookup.
+tex2_t mesh_face_tex_a(const mesh_face_t* mf);
+tex2_t mesh_face_tex_b(const mesh_face_t* mf);
+tex2_t mesh_face_tex_c(const mesh_face_t* mf);
 
 // Load a cube from hard-coded vertices and texture data.
 void load_cube(void);
