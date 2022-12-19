@@ -1,5 +1,7 @@
 # A ground-up 3D renderer in pure C
 
+![Animated gif of a 3D F22 fighter jet cycling through different render modes](assets/f22-small.gif "F22 render modes")
+
 Behold the limited power of a single CPU core performing an uncomfortable amount of
 computational geometry!
 
