@@ -31,9 +31,8 @@ int setup(void) {
 	);
 	g_projection_matrix = mat4_make_perspective(fov_rads, g_window_height / (float)g_window_width, 0.1, 100.0);
 
-	// load_cube();
-	load_png_texture("/Users/amorrison/Documents/github.com/angusgmorrison/rasterizer/assets/f22.png");
-	return load_mesh("/Users/amorrison/Documents/github.com/angusgmorrison/rasterizer/assets/f22.obj");
+	load_png_texture("assets/f22.png");
+	return load_mesh("assets/f22.obj");
 }
 
 void process_keydown(SDL_KeyCode key) {
@@ -94,6 +93,7 @@ void await_frame(void) {
 	g_prev_frame_time = SDL_GetTicks64();
 }
 
+// Modify mesh position fields as desired to view the model in motion.
 void update_mesh(void) {
 	g_mesh.rotation.x += 0.05;
 	g_mesh.rotation.y += 0.05;

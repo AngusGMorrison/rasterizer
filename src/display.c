@@ -293,7 +293,7 @@ void render_triangle(triangle_t* t) {
 		texture_triangle(t, g_mesh_texture);
 		break;
 	case RENDER_MODE_TEXTURE_WIREFRAME:
-		return texture_triangle_with_wireframe(t, g_mesh_texture);
+		texture_triangle_with_wireframe(t, g_mesh_texture);
 		break;
 	default:
 		fill_triangle_with_wireframe(t);
